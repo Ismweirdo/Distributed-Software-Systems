@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品秒杀系统 - 用户注册登录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 流动背景粒子 */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite;
+        }
+
+        .particle:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 60px; height: 60px; left: 30%; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 100px; height: 100px; left: 50%; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 40px; height: 40px; left: 70%; animation-delay: 6s; }
+        .particle:nth-child(5) { width: 90px; height: 90px; left: 90%; animation-delay: 8s; }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            font-size: 3em;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            animation: pulse 2s ease-in-out infinite;
+            font-weight: 300;
+            letter-spacing: 3px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .single-card {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .switch-form {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .switch-form p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .switch-form a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .switch-form a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .form-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(to right, #667eea, #764ba2) 1;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            text-align: center;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 12px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102,126,234,0.3);
+            transform: scale(1.02);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.6);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        .result-message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+            display: none;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-message.show {
+            display: block;
+        }
+
+        .success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        /* 图标装饰 */
+        .icon {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 流动背景粒子 -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="container">
+        <h1>🎯 商品秒杀系统</h1>
+
+        <!-- 注册面板 -->
+        <div id="register-panel" class="form-card single-card">
+            <h2><span class="icon">✨</span>用户注册</h2>
+            <input type="text" id="reg-username" placeholder="请输入用户名">
+            <input type="password" id="reg-password" placeholder="请输入密码（至少 6 位）">
+            <input type="text" id="reg-phone" placeholder="请输入手机号（选填）">
+            <button onclick="register()"><span class="icon">🚀</span>立即注册</button>
+            <p id="reg-result" class="result-message"></p>
+            <div class="switch-form">
+                <p>若已有账号？<a href="javascript:void(0)" onclick="showLogin()">直接登录</a></p>
+            </div>
+        </div>
+
+        <!-- 登录面板 -->
+        <div id="login-panel" class="form-card single-card" style="display: none;">
+            <h2><span class="icon">🔐</span>用户登录</h2>
+            <input type="text" id="login-username" placeholder="请输入用户名">
+            <input type="password" id="login-password" placeholder="请输入密码">
+            <button onclick="login()"><span class="icon">🎉</span>立即登录</button>
+            <p id="login-result" class="result-message"></p>
+            <div class="switch-form">
+                <p>还没有账号？<a href="javascript:void(0)" onclick="showRegister()">立即注册</a></p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const BASE_URL = "/api/users";
+
+    // 显示提示消息
+    function showMessage(elementId, message, type) {
+        const element = document.getElementById(elementId);
+        element.textContent = message;
+        element.className = `result-message show ${type}`;
+        
+        // 成功消息 3 秒后自动消失
+        if (type === 'success') {
+            setTimeout(() => {
+                element.className = 'result-message';
+            }, 3000);
+        }
+    }
+
+    // 切换到登录界面
+    function showLogin() {
+        document.getElementById('register-panel').style.display = 'none';
+        document.getElementById('login-panel').style.display = 'block';
+        // 清空提示信息
+        document.getElementById('reg-result').className = 'result-message';
+    }
+
+    // 切换到注册界面
+    function showRegister() {
+        document.getElementById('login-panel').style.display = 'none';
+        document.getElementById('register-panel').style.display = 'block';
+        // 清空提示信息
+        document.getElementById('login-result').className = 'result-message';
+    }
+
+    // 跳转到主页面
+    function redirectToMainPage() {
+        // 这里可以替换成你的主页面地址
+        window.location.href = '/main.html';
+        // 或者使用：window.location.href = 'http://localhost:8083/main.html';
+    }
+
+    function register() {
+        const username = document.getElementById("reg-username").value.trim();
+        const password = document.getElementById("reg-password").value.trim();
+        const phone = document.getElementById("reg-phone").value.trim();
+        const resultDom = document.getElementById("reg-result");
+
+        // 清空之前的结果
+        resultDom.className = 'result-message';
+
+        // 简单校验
+        if (!username || !password) {
+            showMessage('reg-result', '❌ 用户名和密码不能为空！', 'error');
+            return;
+        }
+
+        if (password.length < 6) {
+            showMessage('reg-result', '❌ 密码长度不能少于 6 位！', 'error');
+            return;
+        }
+
+        // 调用后端注册接口
+        fetch(`${BASE_URL}/register`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                phone: phone
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200) {
+                    showMessage('reg-result', '✅ 注册成功！即将跳转...', 'success');
+                    // 清空输入框
+                    document.getElementById("reg-username").value = "";
+                    document.getElementById("reg-password").value = "";
+                    document.getElementById("reg-phone").value = "";
+                    // 2 秒后跳转到主页面
+                    setTimeout(() => {
+                        redirectToMainPage();
+                    }, 2000);
+                } else {
+                    showMessage('reg-result', `❌ 注册失败：${data.msg}`, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('reg-result', '❌ 注册出错：请检查后端服务是否启动！', 'error');
+                console.error("注册错误：", error);
+            });
+    }
+
+    function login() {
+        const username = document.getElementById("login-username").value.trim();
+        const password = document.getElementById("login-password").value.trim();
+        const resultDom = document.getElementById("login-result");
+
+        // 清空之前的结果
+        resultDom.className = 'result-message';
+
+        // 简单校验
+        if (!username || !password) {
+            showMessage('login-result', '❌ 用户名和密码不能为空！', 'error');
+            return;
+        }
+
+        // 调用后端登录接口
+        fetch(`${BASE_URL}/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200) {
+                    showMessage('login-result', `✅ 登录成功！欢迎回来`, 'success');
+                    // 清空输入框
+                    document.getElementById("login-username").value = "";
+                    document.getElementById("login-password").value = "";
+                    // 2 秒后跳转到主页面
+                    setTimeout(() => {
+                        redirectToMainPage();
+                    }, 2000);
+                } else {
+                    showMessage('login-result', `❌ 登录失败：${data.msg}`, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('login-result', '❌ 登录出错：请检查后端服务是否启动！', 'error');
+                console.error("登录错误：", error);
+            });
+    }
+
+    // 支持回车键提交
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const activeElement = document.activeElement;
+            if (activeElement.id === 'reg-username' || activeElement.id === 'reg-password' || activeElement.id === 'reg-phone') {
+                register();
+            } else if (activeElement.id === 'login-username' || activeElement.id === 'login-password') {
+                login();
+            }
+        }
+    });
+</script>
+</body>
+</html>

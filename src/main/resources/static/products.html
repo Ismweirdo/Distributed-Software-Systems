@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情 - 商品秒杀系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2em;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 70px rgba(0,0,0,0.3);
+        }
+
+        .product-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .product-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            min-height: 60px;
+        }
+
+        .price-section {
+            margin: 20px 0;
+        }
+
+        .original-price {
+            color: #999;
+            text-decoration: line-through;
+            font-size: 1.1em;
+            margin-right: 15px;
+        }
+
+        .seckill-price {
+            color: #ff4757;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stock-info {
+            color: #2ed573;
+            font-size: 1.1em;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .stock-info.low {
+            color: #ffa502;
+        }
+
+        .stock-info.sold-out {
+            color: #ff4757;
+        }
+
+        .time-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .seckill-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(255,75,43,0.4);
+            margin-top: 15px;
+        }
+
+        .seckill-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(255,75,43,0.6);
+        }
+
+        .seckill-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .seckill-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            padding: 50px;
+        }
+
+        .error-message {
+            background: rgba(255,71,87,0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .server-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 商品秒杀系统 - 商品列表</h1>
+        <a href="/main.html" class="back-btn">← 返回主页</a>
+    </div>
+
+    <div id="product-container" class="container">
+        <div class="loading">正在加载商品...</div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/products';
+
+        // 加载商品列表
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_BASE}/list`);
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    displayProducts(data.data);
+                } else {
+                    showError('加载失败：' + data.msg);
+                }
+            } catch (error) {
+                console.error('加载商品失败:', error);
+                showError('网络错误，请稍后重试');
+            }
+        }
+
+        // 显示商品列表
+        function displayProducts(products) {
+            const container = document.getElementById('product-container');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="loading">暂无商品</div>';
+                return;
+            }
+
+            container.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <h3 class="product-title">${escapeHtml(product.productName)}</h3>
+                    <p class="product-description">${escapeHtml(product.description)}</p>
+                    
+                    <div class="price-section">
+                        <span class="original-price">¥${formatPrice(product.originalPrice)}</span>
+                        <span class="seckill-price">¥${formatPrice(product.seckillPrice)}</span>
+                    </div>
+                    
+                    <div class="stock-info ${getStockClass(product.stock)}">
+                        ${getStockText(product.stock)}
+                    </div>
+                    
+                    <div class="time-info">
+                        ⏰ 秒杀时间：${formatTime(product.startTime)} - ${formatTime(product.endTime)}
+                    </div>
+                    
+                    <button class="seckill-btn" onclick="seckill(${product.id})" ${product.stock <= 0 ? 'disabled' : ''}>
+                        ${product.stock <= 0 ? '已售罄' : '立即秒杀'}
+                    </button>
+                    
+                    <div class="server-info">
+                        <span class="badge">商品 ID: ${product.id}</span>
+                        <span>库存：${product.stock}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 秒杀功能
+        async function seckill(productId) {
+            if (!confirm('确定要参与秒杀吗？')) {
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '秒杀中...';
+
+            try {
+                const response = await fetch(`${API_BASE}/seckill/${productId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.code === 200 && data.data) {
+                    alert('🎉 秒杀成功！请尽快完成支付。');
+                    // 重新加载商品列表
+                    loadProducts();
+                } else {
+                    alert('❌ 秒杀失败：' + data.msg);
+                    btn.disabled = false;
+                    btn.textContent = '立即秒杀';
+                }
+            } catch (error) {
+                console.error('秒杀失败:', error);
+                alert('❌ 网络错误，请稍后重试');
+                btn.disabled = false;
+                btn.textContent = '立即秒杀';
+            }
+        }
+
+        // 工具函数
+        function getStockClass(stock) {
+            if (stock <= 0) return 'sold-out';
+            if (stock < 20) return 'low';
+            return '';
+        }
+
+        function getStockText(stock) {
+            if (stock <= 0) return '🚫 已售罄';
+            if (stock < 20) return `🔥 库存紧张：剩余${stock}件`;
+            return `✅ 库存充足：${stock}件`;
+        }
+
+        function formatPrice(price) {
+            return parseFloat(price).toFixed(2);
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '-';
+            const date = new Date(timeStr);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showError(message) {
+            document.getElementById('product-container').innerHTML = 
+                `<div class="error-message">❌ ${message}</div>`;
+        }
+
+        // 页面加载时获取商品列表
+        loadProducts();
+    </script>
+</body>
+</html>
