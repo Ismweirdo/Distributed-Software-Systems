@@ -1,0 +1,68 @@
+services:
+  # MySQL 数据库（使用 DaoCloud 镜像源）
+  mysql:
+    image: docker.m.daocloud.io/library/mysql:8.0
+    container_name: seckill-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: seckill_db
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: always
+    networks:
+      - seckill-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存
+  redis:
+    image: docker.m.daocloud.io/library/redis:7-alpine
+    container_name: seckill-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: always
+    networks:
+      - seckill-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端服务
+  seckill-service:
+    build: .
+    container_name: seckill-service
+    ports:
+      - "8084:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    networks:
+      - seckill-network
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  seckill-network:
+    driver: bridge

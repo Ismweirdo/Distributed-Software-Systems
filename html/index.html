@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>商品秒杀系统 - 用户注册登录</title>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h1>商品秒杀系统</h1>
+
+    <!-- 注册表单 -->
+    <div class="form-card">
+        <h2>用户注册</h2>
+        <input type="text" id="reg-username" placeholder="请输入用户名">
+        <input type="password" id="reg-password" placeholder="请输入密码">
+        <input type="text" id="reg-phone" placeholder="请输入手机号（选填）">
+        <button onclick="register()">立即注册</button>
+        <p id="reg-result"></p>
+    </div>
+
+    <!-- 登录表单 -->
+    <div class="form-card">
+        <h2>用户登录</h2>
+        <input type="text" id="login-username" placeholder="请输入用户名">
+        <input type="password" id="login-password" placeholder="请输入密码">
+        <button onclick="login()">立即登录</button>
+        <p id="login-result"></p>
+    </div>
+</div>
+
+<!-- 引入JS文件 -->
+<script src="app.js"></script>
+</body>
+</html>
