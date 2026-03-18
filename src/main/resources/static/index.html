@@ -3,264 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品秒杀系统 - 用户注册登录</title>
+    <title>秒杀商城 - 登录与注册</title>
     <style>
+        :root {
+            --bg: #081c2c;
+            --panel: rgba(7, 17, 27, 0.78);
+            --panel-border: rgba(147, 197, 253, 0.16);
+            --text: #ecf8ff;
+            --muted: #9db2c6;
+            --primary: #ff7a59;
+            --primary-strong: #ff5c39;
+            --secondary: #50c7c7;
+            --success: #43c59e;
+            --danger: #ff6b6b;
+            --warning: #f4c95d;
+            --input: rgba(10, 24, 38, 0.9);
+            --shadow: 0 24px 60px rgba(4, 12, 20, 0.45);
+            --radius: 28px;
+        }
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
+            margin: 0;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            position: relative;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(255, 122, 89, 0.25), transparent 35%),
+                radial-gradient(circle at top right, rgba(80, 199, 199, 0.2), transparent 30%),
+                linear-gradient(135deg, #06131f 0%, #0b2940 52%, #12385a 100%);
             overflow-x: hidden;
         }
 
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* 流动背景粒子 */
-        .particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: auto;
+            width: 26rem;
+            height: 26rem;
+            border-radius: 50%;
+            filter: blur(10px);
+            opacity: 0.38;
+            pointer-events: none;
             z-index: 0;
         }
 
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            animation: float 20s infinite;
+        body::before {
+            top: -8rem;
+            right: -8rem;
+            background: rgba(255, 122, 89, 0.3);
         }
 
-        .particle:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
-        .particle:nth-child(2) { width: 60px; height: 60px; left: 30%; animation-delay: 2s; }
-        .particle:nth-child(3) { width: 100px; height: 100px; left: 50%; animation-delay: 4s; }
-        .particle:nth-child(4) { width: 40px; height: 40px; left: 70%; animation-delay: 6s; }
-        .particle:nth-child(5) { width: 90px; height: 90px; left: 90%; animation-delay: 8s; }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
+        body::after {
+            bottom: -10rem;
+            left: -8rem;
+            background: rgba(80, 199, 199, 0.24);
         }
 
-        .container {
-            max-width: 500px;
-            width: 100%;
+        .shell {
+            position: relative;
             z-index: 1;
+            width: min(1160px, calc(100% - 32px));
+            margin: 0 auto;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1.12fr 0.88fr;
+            gap: 28px;
+            align-items: center;
+            padding: 40px 0;
+        }
+
+        .hero,
+        .auth-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+        }
+
+        .hero {
+            padding: 44px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #cbe7ff;
+            font-size: 14px;
+            letter-spacing: 0.06em;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #ffc371);
+            box-shadow: 0 0 12px rgba(255, 122, 89, 0.75);
         }
 
         h1 {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            font-size: 3em;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-            animation: pulse 2s ease-in-out infinite;
-            font-weight: 300;
-            letter-spacing: 3px;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .form-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-
-        .single-card {
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .switch-form {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .switch-form p {
-            color: #666;
-            font-size: 14px;
             margin: 0;
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            line-height: 1.02;
+            letter-spacing: 0.02em;
         }
 
-        .switch-form a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .switch-form a:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        .form-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 35px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .form-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-            transform: rotate(45deg);
-            animation: shimmer 3s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) rotate(45deg); }
-        }
-
-        .form-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        h2 {
-            margin-top: 0;
-            color: #333;
-            border-bottom: 3px solid;
-            border-image: linear-gradient(to right, #667eea, #764ba2) 1;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-            font-size: 1.8em;
-            text-align: center;
-            position: relative;
-        }
-
-        input {
-            width: 100%;
-            padding: 15px;
-            margin: 12px 0;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 15px rgba(102,126,234,0.3);
-            transform: scale(1.02);
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
+        .hero p {
+            margin: 0;
+            color: var(--muted);
             font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
-            position: relative;
-            overflow: hidden;
+            line-height: 1.8;
+            max-width: 48rem;
         }
 
-        button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .metric,
+        .tip-card {
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 22px;
+        }
+
+        .metric strong {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .metric span,
+        .tip-card p {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .tip-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .tip-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            color: #d8eeff;
+        }
+
+        .tip-item b {
+            color: #fff;
+        }
+
+        .tip-dot {
+            width: 10px;
+            height: 10px;
+            margin-top: 8px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            background: linear-gradient(135deg, var(--secondary), #8df2f2);
+            flex-shrink: 0;
         }
 
-        button:hover::before {
-            width: 300px;
-            height: 300px;
+        .auth-card {
+            padding: 28px;
         }
 
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102,126,234,0.6);
+        .tabbar {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            margin-bottom: 28px;
         }
 
-        button:active {
-            transform: translateY(-1px);
+        .tab {
+            border: none;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #c6dbec;
+            background: transparent;
+            cursor: pointer;
+            transition: 0.25s ease;
         }
 
-        .result-message {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-            animation: slideIn 0.5s ease;
+        .tab.active {
+            background: linear-gradient(135deg, rgba(255, 122, 89, 0.95), rgba(255, 166, 91, 0.95));
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(255, 122, 89, 0.28);
+        }
+
+        .panel {
             display: none;
         }
 
-        @keyframes slideIn {
+        .panel.active {
+            display: block;
+            animation: fade-up 0.28s ease;
+        }
+
+        @keyframes fade-up {
             from {
                 opacity: 0;
-                transform: translateY(-20px);
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
@@ -268,225 +236,461 @@
             }
         }
 
-        .result-message.show {
+        .panel h2 {
+            margin: 0 0 10px;
+            font-size: 1.8rem;
+        }
+
+        .panel-subtitle {
+            margin: 0 0 24px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d9ebf7;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            padding: 15px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(157, 178, 198, 0.25);
+            background: var(--input);
+            color: #fff;
+            font-size: 15px;
+            transition: 0.2s ease;
+        }
+
+        .input-wrap input::placeholder {
+            color: #6e879d;
+        }
+
+        .input-wrap input:focus {
+            outline: none;
+            border-color: rgba(255, 122, 89, 0.8);
+            box-shadow: 0 0 0 4px rgba(255, 122, 89, 0.12);
+        }
+
+        .field-help {
+            margin-top: 8px;
+            color: #7f95a9;
+            font-size: 13px;
+        }
+
+        .cta {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary) 0%, #ff9a5a 100%);
+            box-shadow: 0 16px 36px rgba(255, 122, 89, 0.3);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .cta:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 40px rgba(255, 122, 89, 0.36);
+        }
+
+        .cta:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+
+        .inline-action {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .inline-action button {
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .message {
+            display: none;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .message.show {
             display: block;
         }
 
-        .success {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
-            border: 2px solid #c3e6cb;
+        .message.success {
+            background: rgba(67, 197, 158, 0.14);
+            border: 1px solid rgba(67, 197, 158, 0.35);
+            color: #b8ffe6;
         }
 
-        .error {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            color: #721c24;
-            border: 2px solid #f5c6cb;
+        .message.error {
+            background: rgba(255, 107, 107, 0.12);
+            border: 1px solid rgba(255, 107, 107, 0.35);
+            color: #ffd3d3;
         }
 
-        .info {
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-            color: #0c5460;
-            border: 2px solid #bee5eb;
+        .message.info {
+            background: rgba(80, 199, 199, 0.13);
+            border: 1px solid rgba(80, 199, 199, 0.32);
+            color: #c9ffff;
         }
 
-        /* 图标装饰 */
-        .icon {
-            font-size: 1.2em;
-            margin-right: 8px;
+        .footer-note {
+            margin-top: 20px;
+            color: #7891a7;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        @media (max-width: 960px) {
+            .shell {
+                grid-template-columns: 1fr;
+                padding: 24px 0 36px;
+            }
+
+            .hero {
+                padding: 30px;
+            }
+
+            .auth-card {
+                padding: 22px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .shell {
+                width: min(100% - 20px, 1160px);
+                gap: 18px;
+            }
+
+            .hero,
+            .auth-card {
+                border-radius: 22px;
+            }
+
+            .hero {
+                padding: 24px;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.3rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 流动背景粒子 -->
-    <div class="particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-    </div>
+<main class="shell">
+    <section class="hero">
+        <span class="eyebrow">实时秒杀体验升级中</span>
+        <div>
+            <h1>更快进入活动<br>更清晰掌握库存</h1>
+        </div>
+        <p>
+            登录后即可查看当前秒杀商品、活动时间和库存状态。注册页会先做基础校验，成功后自动进入商城主页，减少来回跳转。
+        </p>
+        <div class="hero-grid">
+            <div class="metric">
+                <strong>3 步</strong>
+                <span>注册、登录、开抢一条链路直达，减少不必要的页面干扰。</span>
+            </div>
+            <div class="metric">
+                <strong>实时</strong>
+                <span>倒计时、库存展示和按钮状态会根据活动进度自动变化。</span>
+            </div>
+            <div class="tip-card">
+                <div class="tip-list">
+                    <div class="tip-item">
+                        <span class="tip-dot"></span>
+                        <span><b>更稳的提示</b>：统一成功、失败、加载中的反馈样式。</span>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-dot"></span>
+                        <span><b>更清楚的状态</b>：避免乱码和错误字符串拼接，信息能直接读懂。</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tip-card">
+                <p>如果你已经有账号，可以直接登录；如果是首次进入，注册成功后会自动保存用户名用于后续页面展示。</p>
+            </div>
+        </div>
+    </section>
 
-    <div class="container">
-        <h1>🎯 商品秒杀系统</h1>
+    <section class="auth-card">
+        <div class="tabbar" role="tablist" aria-label="登录和注册切换">
+            <button class="tab active" type="button" data-target="login-panel">登录</button>
+            <button class="tab" type="button" data-target="register-panel">注册</button>
+        </div>
 
-        <!-- 注册面板 -->
-        <div id="register-panel" class="form-card single-card">
-            <h2><span class="icon">✨</span>用户注册</h2>
-            <input type="text" id="reg-username" placeholder="请输入用户名">
-            <input type="password" id="reg-password" placeholder="请输入密码（至少 6 位）">
-            <input type="text" id="reg-phone" placeholder="请输入手机号（选填）">
-            <button onclick="register()"><span class="icon">🚀</span>立即注册</button>
-            <p id="reg-result" class="result-message"></p>
-            <div class="switch-form">
-                <p>若已有账号？<a href="javascript:void(0)" onclick="showLogin()">直接登录</a></p>
+        <div id="login-panel" class="panel active">
+            <h2>欢迎回来</h2>
+            <p class="panel-subtitle">输入账号和密码，快速回到秒杀主会场。</p>
+            <form id="login-form" novalidate>
+                <div class="field">
+                    <label for="login-username">用户名</label>
+                    <div class="input-wrap">
+                        <input id="login-username" name="username" type="text" autocomplete="username" placeholder="请输入用户名">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="login-password">密码</label>
+                    <div class="input-wrap">
+                        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码">
+                    </div>
+                </div>
+                <button id="login-submit" class="cta" type="submit">登录并进入商城</button>
+                <div id="login-message" class="message" role="status" aria-live="polite"></div>
+            </form>
+            <div class="inline-action">
+                还没有账号？
+                <button type="button" data-switch="register-panel">立即注册</button>
             </div>
         </div>
 
-        <!-- 登录面板 -->
-        <div id="login-panel" class="form-card single-card" style="display: none;">
-            <h2><span class="icon">🔐</span>用户登录</h2>
-            <input type="text" id="login-username" placeholder="请输入用户名">
-            <input type="password" id="login-password" placeholder="请输入密码">
-            <button onclick="login()"><span class="icon">🎉</span>立即登录</button>
-            <p id="login-result" class="result-message"></p>
-            <div class="switch-form">
-                <p>还没有账号？<a href="javascript:void(0)" onclick="showRegister()">立即注册</a></p>
+        <div id="register-panel" class="panel">
+            <h2>创建账号</h2>
+            <p class="panel-subtitle">先完成基础信息登记，再进入秒杀首页查看活动商品。</p>
+            <form id="register-form" novalidate>
+                <div class="field">
+                    <label for="reg-username">用户名</label>
+                    <div class="input-wrap">
+                        <input id="reg-username" name="username" type="text" autocomplete="username" placeholder="建议 2-20 位，方便识别">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="reg-password">密码</label>
+                    <div class="input-wrap">
+                        <input id="reg-password" name="password" type="password" autocomplete="new-password" placeholder="至少 6 位">
+                    </div>
+                    <div class="field-help">当前后端只做基础账号校验，这里会先做前端长度判断。</div>
+                </div>
+                <div class="field">
+                    <label for="reg-phone">手机号</label>
+                    <div class="input-wrap">
+                        <input id="reg-phone" name="phone" type="tel" autocomplete="tel" placeholder="选填，11 位手机号">
+                    </div>
+                </div>
+                <button id="register-submit" class="cta" type="submit">注册并进入商城</button>
+                <div id="register-message" class="message" role="status" aria-live="polite"></div>
+            </form>
+            <div class="inline-action">
+                已有账号？
+                <button type="button" data-switch="login-panel">直接登录</button>
             </div>
         </div>
-    </div>
+
+        <div class="footer-note">前端已统一走相对路径接口 `/api/users/*`，部署到 Spring Boot 静态资源目录后可直接访问。</div>
+    </section>
+</main>
 
 <script>
-    const BASE_URL = "/api/users";
+    const USER_API_BASE = "/api/users";
+    const STORAGE_KEYS = {
+        username: "seckill_username",
+        token: "seckill_login_token"
+    };
 
-    // 显示提示消息
-    function showMessage(elementId, message, type) {
-        const element = document.getElementById(elementId);
-        element.textContent = message;
-        element.className = `result-message show ${type}`;
-        
-        // 成功消息 3 秒后自动消失
-        if (type === 'success') {
-            setTimeout(() => {
-                element.className = 'result-message';
-            }, 3000);
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    const panels = Array.from(document.querySelectorAll(".panel"));
+    const switchButtons = Array.from(document.querySelectorAll("[data-switch]"));
+    const loginForm = document.getElementById("login-form");
+    const registerForm = document.getElementById("register-form");
+    const loginSubmit = document.getElementById("login-submit");
+    const registerSubmit = document.getElementById("register-submit");
+    const loginMessage = document.getElementById("login-message");
+    const registerMessage = document.getElementById("register-message");
+
+    function activatePanel(targetId) {
+        tabs.forEach((tab) => {
+            tab.classList.toggle("active", tab.dataset.target === targetId);
+        });
+        panels.forEach((panel) => {
+            panel.classList.toggle("active", panel.id === targetId);
+        });
+    }
+
+    tabs.forEach((tab) => {
+        tab.addEventListener("click", () => activatePanel(tab.dataset.target));
+    });
+
+    switchButtons.forEach((button) => {
+        button.addEventListener("click", () => activatePanel(button.dataset.switch));
+    });
+
+    function showMessage(element, type, text) {
+        element.textContent = text;
+        element.className = "message show " + type;
+    }
+
+    function clearMessage(element) {
+        element.textContent = "";
+        element.className = "message";
+    }
+
+    function setButtonLoading(button, isLoading, loadingText, defaultText) {
+        button.disabled = isLoading;
+        button.textContent = isLoading ? loadingText : defaultText;
+    }
+
+    function saveUserSession(username, token) {
+        localStorage.setItem(STORAGE_KEYS.username, username);
+        if (token) {
+            localStorage.setItem(STORAGE_KEYS.token, token);
         }
     }
 
-    // 切换到登录界面
-    function showLogin() {
-        document.getElementById('register-panel').style.display = 'none';
-        document.getElementById('login-panel').style.display = 'block';
-        // 清空提示信息
-        document.getElementById('reg-result').className = 'result-message';
-    }
-
-    // 切换到注册界面
-    function showRegister() {
-        document.getElementById('login-panel').style.display = 'none';
-        document.getElementById('register-panel').style.display = 'block';
-        // 清空提示信息
-        document.getElementById('login-result').className = 'result-message';
-    }
-
-    // 跳转到主页面
     function redirectToMainPage() {
-        // 这里可以替换成你的主页面地址
-        window.location.href = '/main.html';
-        // 或者使用：window.location.href = 'http://localhost:8083/main.html';
+        window.location.href = "/main.html";
     }
 
-    function register() {
-        const username = document.getElementById("reg-username").value.trim();
-        const password = document.getElementById("reg-password").value.trim();
-        const phone = document.getElementById("reg-phone").value.trim();
-        const resultDom = document.getElementById("reg-result");
-
-        // 清空之前的结果
-        resultDom.className = 'result-message';
-
-        // 简单校验
-        if (!username || !password) {
-            showMessage('reg-result', '❌ 用户名和密码不能为空！', 'error');
-            return;
+    function normalizeMessage(raw, fallbackText) {
+        if (typeof raw !== "string" || !raw.trim()) {
+            return fallbackText;
         }
-
-        if (password.length < 6) {
-            showMessage('reg-result', '❌ 密码长度不能少于 6 位！', 'error');
-            return;
-        }
-
-        // 调用后端注册接口
-        fetch(`${BASE_URL}/register`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username: username,
-                password: password,
-                phone: phone
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.code === 200) {
-                    showMessage('reg-result', '✅ 注册成功！即将跳转...', 'success');
-                    // 清空输入框
-                    document.getElementById("reg-username").value = "";
-                    document.getElementById("reg-password").value = "";
-                    document.getElementById("reg-phone").value = "";
-                    // 2 秒后跳转到主页面
-                    setTimeout(() => {
-                        redirectToMainPage();
-                    }, 2000);
-                } else {
-                    showMessage('reg-result', `❌ 注册失败：${data.msg}`, 'error');
-                }
-            })
-            .catch(error => {
-                showMessage('reg-result', '❌ 注册出错：请检查后端服务是否启动！', 'error');
-                console.error("注册错误：", error);
-            });
+        return raw.trim();
     }
 
-    function login() {
+    function validateRegisterForm(payload) {
+        if (!payload.username || !payload.password) {
+            return "用户名和密码不能为空。";
+        }
+        if (payload.username.length < 2 || payload.username.length > 20) {
+            return "用户名长度需在 2 到 20 位之间。";
+        }
+        if (payload.password.length < 6) {
+            return "密码长度不能少于 6 位。";
+        }
+        if (payload.phone && !/^1\d{10}$/.test(payload.phone)) {
+            return "手机号格式不正确，请输入 11 位大陆手机号。";
+        }
+        return "";
+    }
+
+    async function requestJson(url, options) {
+        const response = await fetch(url, options);
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+            throw new Error("服务端返回的不是 JSON 数据。");
+        }
+        return response.json();
+    }
+
+    loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage(loginMessage);
+
         const username = document.getElementById("login-username").value.trim();
         const password = document.getElementById("login-password").value.trim();
-        const resultDom = document.getElementById("login-result");
 
-        // 清空之前的结果
-        resultDom.className = 'result-message';
-
-        // 简单校验
         if (!username || !password) {
-            showMessage('login-result', '❌ 用户名和密码不能为空！', 'error');
+            showMessage(loginMessage, "error", "请输入用户名和密码。");
             return;
         }
 
-        // 调用后端登录接口
-        fetch(`${BASE_URL}/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username: username,
-                password: password
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.code === 200) {
-                    showMessage('login-result', `✅ 登录成功！欢迎回来`, 'success');
-                    // 清空输入框
-                    document.getElementById("login-username").value = "";
-                    document.getElementById("login-password").value = "";
-                    // 2 秒后跳转到主页面
-                    setTimeout(() => {
-                        redirectToMainPage();
-                    }, 2000);
-                } else {
-                    showMessage('login-result', `❌ 登录失败：${data.msg}`, 'error');
-                }
-            })
-            .catch(error => {
-                showMessage('login-result', '❌ 登录出错：请检查后端服务是否启动！', 'error');
-                console.error("登录错误：", error);
-            });
-    }
+        setButtonLoading(loginSubmit, true, "登录中...", "登录并进入商城");
+        showMessage(loginMessage, "info", "正在验证账号信息...");
 
-    // 支持回车键提交
-    document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const activeElement = document.activeElement;
-            if (activeElement.id === 'reg-username' || activeElement.id === 'reg-password' || activeElement.id === 'reg-phone') {
-                register();
-            } else if (activeElement.id === 'login-username' || activeElement.id === 'login-password') {
-                login();
+        try {
+            const result = await requestJson(USER_API_BASE + "/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (result.code === 200) {
+                saveUserSession(username, result.data);
+                showMessage(loginMessage, "success", "登录成功，正在进入商城主页...");
+                loginForm.reset();
+                setTimeout(redirectToMainPage, 900);
+                return;
             }
+
+            showMessage(loginMessage, "error", "登录失败：" + normalizeMessage(result.msg, "请检查账号或密码。"));
+        } catch (error) {
+            showMessage(loginMessage, "error", "登录请求失败，请确认后端服务已启动。");
+            console.error("login request failed", error);
+        } finally {
+            setButtonLoading(loginSubmit, false, "登录中...", "登录并进入商城");
         }
     });
+
+    registerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage(registerMessage);
+
+        const payload = {
+            username: document.getElementById("reg-username").value.trim(),
+            password: document.getElementById("reg-password").value.trim(),
+            phone: document.getElementById("reg-phone").value.trim()
+        };
+
+        const validationMessage = validateRegisterForm(payload);
+        if (validationMessage) {
+            showMessage(registerMessage, "error", validationMessage);
+            return;
+        }
+
+        setButtonLoading(registerSubmit, true, "注册中...", "注册并进入商城");
+        showMessage(registerMessage, "info", "正在创建账号...");
+
+        try {
+            const result = await requestJson(USER_API_BASE + "/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (result.code === 200) {
+                saveUserSession(payload.username, "");
+                showMessage(registerMessage, "success", "注册成功，正在进入商城主页...");
+                registerForm.reset();
+                setTimeout(redirectToMainPage, 900);
+                return;
+            }
+
+            showMessage(registerMessage, "error", "注册失败：" + normalizeMessage(result.msg, "请稍后重试。"));
+        } catch (error) {
+            showMessage(registerMessage, "error", "注册请求失败，请确认后端服务已启动。");
+            console.error("register request failed", error);
+        } finally {
+            setButtonLoading(registerSubmit, false, "注册中...", "注册并进入商城");
+        }
+    });
+
+    const cachedUsername = localStorage.getItem(STORAGE_KEYS.username);
+    if (cachedUsername) {
+        document.getElementById("login-username").value = cachedUsername;
+    }
 </script>
 </body>
 </html>

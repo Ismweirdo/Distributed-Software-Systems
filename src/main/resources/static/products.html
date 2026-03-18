@@ -3,359 +3,819 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品详情 - 商品秒杀系统</title>
+    <title>秒杀商城 - 商品列表</title>
     <style>
+        :root {
+            --bg: #071621;
+            --panel: rgba(8, 22, 34, 0.82);
+            --panel-strong: rgba(11, 27, 40, 0.96);
+            --border: rgba(173, 214, 255, 0.13);
+            --text: #eef7ff;
+            --muted: #98aec1;
+            --primary: #ff7a59;
+            --secondary: #4bd3c7;
+            --success: #3ed29b;
+            --warning: #f4c95d;
+            --danger: #ff6b6b;
+            --radius: 26px;
+            --shadow: 0 24px 60px rgba(4, 11, 20, 0.44);
+        }
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradient 15s ease infinite;
+            margin: 0;
             min-height: 100vh;
-            padding: 20px;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 10% 10%, rgba(255, 122, 89, 0.18), transparent 20%),
+                radial-gradient(circle at 100% 0%, rgba(75, 211, 199, 0.16), transparent 28%),
+                linear-gradient(145deg, #05111b 0%, #0b2537 55%, #0f3550 100%);
         }
 
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .page {
+            width: min(1280px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 24px 0 36px;
         }
 
-        .header {
-            max-width: 1200px;
-            margin: 0 auto 30px;
+        .hero {
+            padding: 28px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background:
+                linear-gradient(135deg, rgba(255, 122, 89, 0.12), rgba(75, 211, 199, 0.08)),
+                var(--panel-strong);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3.3rem);
+            line-height: 1.08;
+        }
+
+        .hero p {
+            margin: 12px 0 0;
+            color: var(--muted);
+            line-height: 1.75;
+            max-width: 48rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), #ff9a61);
+            box-shadow: 0 14px 30px rgba(255, 122, 89, 0.28);
+        }
+
+        .btn-secondary {
+            color: #d7ecfe;
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .summary-card {
+            padding: 18px 20px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .summary-card span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .summary-card strong {
+            font-size: 1.5rem;
+        }
+
+        .toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
+            margin: 22px 0 16px;
+            flex-wrap: wrap;
         }
 
-        .header h1 {
-            color: white;
-            font-size: 2em;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .back-btn {
-            background: rgba(255,255,255,0.3);
-            color: white;
-            border: 2px solid white;
-            padding: 10px 25px;
-            border-radius: 25px;
+        .filter-chip {
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
+            color: #d8ecfc;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
+            transition: 0.2s ease;
         }
 
-        .back-btn:hover {
-            background: white;
-            color: #667eea;
+        .filter-chip.active {
+            background: rgba(255, 122, 89, 0.18);
+            border-color: rgba(255, 122, 89, 0.4);
+            color: #fff;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .status-line {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            display: none;
+            line-height: 1.6;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.info {
+            background: rgba(75, 211, 199, 0.12);
+            border: 1px solid rgba(75, 211, 199, 0.26);
+            color: #caffff;
+        }
+
+        .message.error {
+            background: rgba(255, 107, 107, 0.12);
+            border: 1px solid rgba(255, 107, 107, 0.25);
+            color: #ffd8d8;
+        }
+
+        .products {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 18px;
         }
 
         .product-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-            animation: fadeInUp 0.6s ease;
+            position: relative;
+            padding: 24px;
+            border-radius: 24px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 360px;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .product-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 35%);
+            pointer-events: none;
         }
 
-        .product-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 70px rgba(0,0,0,0.3);
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
         }
 
-        .product-title {
-            font-size: 1.8em;
-            color: #333;
-            margin-bottom: 15px;
-            font-weight: bold;
+        .product-name {
+            margin: 0;
+            font-size: 1.35rem;
+            line-height: 1.35;
         }
 
-        .product-description {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-            min-height: 60px;
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
         }
 
-        .price-section {
-            margin: 20px 0;
+        .badge.upcoming {
+            background: rgba(244, 201, 93, 0.14);
+            color: #ffe49c;
         }
 
-        .original-price {
-            color: #999;
+        .badge.active {
+            background: rgba(62, 210, 155, 0.14);
+            color: #c9ffe9;
+        }
+
+        .badge.ended,
+        .badge.soldout {
+            background: rgba(255, 107, 107, 0.14);
+            color: #ffd5d5;
+        }
+
+        .description {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.8;
+            min-height: 72px;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .price-current {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff4dd;
+        }
+
+        .price-origin {
+            color: #81a0b6;
             text-decoration: line-through;
-            font-size: 1.1em;
-            margin-right: 15px;
         }
 
-        .seckill-price {
-            color: #ff4757;
-            font-size: 2em;
-            font-weight: bold;
+        .discount {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 122, 89, 0.14);
+            color: #ffd4c9;
+            font-size: 13px;
         }
 
-        .stock-info {
-            color: #2ed573;
-            font-size: 1.1em;
-            margin: 15px 0;
-            font-weight: bold;
+        .meta {
+            display: grid;
+            gap: 10px;
         }
 
-        .stock-info.low {
-            color: #ffa502;
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: #d7ebfb;
         }
 
-        .stock-info.sold-out {
-            color: #ff4757;
+        .meta-row span:last-child {
+            color: var(--muted);
+            text-align: right;
         }
 
-        .time-info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
-            margin: 15px 0;
-            text-align: center;
-            font-weight: bold;
+        .progress {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .progress > div {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(135deg, var(--secondary), #97fff3);
+        }
+
+        .progress.warning > div {
+            background: linear-gradient(135deg, var(--warning), #ffd980);
+        }
+
+        .progress.danger > div {
+            background: linear-gradient(135deg, var(--danger), #ff9f9f);
+        }
+
+        .countdown {
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #dff3ff;
+            line-height: 1.6;
+        }
+
+        .countdown strong {
+            color: #fff;
+        }
+
+        .action {
+            margin-top: auto;
         }
 
         .seckill-btn {
             width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-            color: white;
+            padding: 15px 18px;
             border: none;
-            border-radius: 10px;
-            font-size: 1.3em;
-            font-weight: bold;
+            border-radius: 18px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), #ff9a61);
+            box-shadow: 0 16px 30px rgba(255, 122, 89, 0.24);
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(255,75,43,0.4);
-            margin-top: 15px;
+            transition: 0.2s ease;
         }
 
-        .seckill-btn:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 12px 30px rgba(255,75,43,0.6);
-        }
-
-        .seckill-btn:active {
-            transform: translateY(-1px);
+        .seckill-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
         }
 
         .seckill-btn:disabled {
-            background: #ccc;
+            opacity: 0.58;
             cursor: not-allowed;
             box-shadow: none;
         }
 
-        .loading {
+        .empty {
+            padding: 36px 24px;
+            border-radius: 24px;
             text-align: center;
-            color: white;
-            font-size: 1.5em;
-            padding: 50px;
+            border: 1px solid var(--border);
+            background: var(--panel);
+            color: var(--muted);
         }
 
-        .error-message {
-            background: rgba(255,71,87,0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: center;
+        @media (max-width: 1024px) {
+            .summary {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
         }
 
-        .server-info {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 0.85em;
-            color: #999;
-        }
+        @media (max-width: 720px) {
+            .page {
+                width: min(100% - 20px, 1280px);
+                padding-top: 18px;
+            }
 
-        .badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            margin-right: 8px;
+            .hero,
+            .product-card,
+            .empty {
+                border-radius: 22px;
+            }
+
+            .hero-top {
+                flex-direction: column;
+            }
+
+            .hero-actions {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .summary {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🎯 商品秒杀系统 - 商品列表</h1>
-        <a href="/main.html" class="back-btn">← 返回主页</a>
-    </div>
+<main class="page">
+    <section class="hero">
+        <div class="hero-top">
+            <div>
+                <h1>当前秒杀商品一览</h1>
+                <p>商品卡片会自动识别未开始、进行中、已结束和已售罄状态，并根据状态调整按钮和提示文案。点击抢购后会立即刷新列表。</p>
+            </div>
+            <div class="hero-actions">
+                <a class="btn btn-secondary" href="/main.html">返回主页</a>
+                <button id="refresh-btn" class="btn btn-primary" type="button">刷新商品列表</button>
+            </div>
+        </div>
 
-    <div id="product-container" class="container">
-        <div class="loading">正在加载商品...</div>
-    </div>
+        <div class="summary">
+            <div class="summary-card">
+                <span>商品总数</span>
+                <strong id="summary-total">0</strong>
+            </div>
+            <div class="summary-card">
+                <span>进行中活动</span>
+                <strong id="summary-active">0</strong>
+            </div>
+            <div class="summary-card">
+                <span>即将开始</span>
+                <strong id="summary-upcoming">0</strong>
+            </div>
+            <div class="summary-card">
+                <span>已售罄</span>
+                <strong id="summary-soldout">0</strong>
+            </div>
+        </div>
+    </section>
 
-    <script>
-        const API_BASE = '/api/products';
+    <section class="toolbar">
+        <div class="filter-bar">
+            <button class="filter-chip active" data-filter="all" type="button">全部</button>
+            <button class="filter-chip" data-filter="active" type="button">进行中</button>
+            <button class="filter-chip" data-filter="upcoming" type="button">即将开始</button>
+            <button class="filter-chip" data-filter="soldout" type="button">已售罄</button>
+            <button class="filter-chip" data-filter="ended" type="button">已结束</button>
+        </div>
+        <div class="status-line" id="status-line">准备加载商品数据...</div>
+    </section>
 
-        // 加载商品列表
-        async function loadProducts() {
-            try {
-                const response = await fetch(`${API_BASE}/list`);
-                const data = await response.json();
-                
-                if (data.code === 200) {
-                    displayProducts(data.data);
-                } else {
-                    showError('加载失败：' + data.msg);
-                }
-            } catch (error) {
-                console.error('加载商品失败:', error);
-                showError('网络错误，请稍后重试');
-            }
+    <div id="page-message" class="message" role="status" aria-live="polite"></div>
+    <section id="product-container" class="products"></section>
+</main>
+
+<script>
+    const API_BASE = "/api/products";
+    const productContainer = document.getElementById("product-container");
+    const pageMessage = document.getElementById("page-message");
+    const statusLine = document.getElementById("status-line");
+    const refreshButton = document.getElementById("refresh-btn");
+    const filterButtons = Array.from(document.querySelectorAll(".filter-chip"));
+    const summaryNodes = {
+        total: document.getElementById("summary-total"),
+        active: document.getElementById("summary-active"),
+        upcoming: document.getElementById("summary-upcoming"),
+        soldout: document.getElementById("summary-soldout")
+    };
+
+    let allProducts = [];
+    let activeFilter = "all";
+    let countdownTimer = null;
+    let seckillInFlight = false;
+
+    function showPageMessage(type, text) {
+        pageMessage.textContent = text;
+        pageMessage.className = "message show " + type;
+    }
+
+    function clearPageMessage() {
+        pageMessage.textContent = "";
+        pageMessage.className = "message";
+    }
+
+    function parseDate(value) {
+        if (!value) {
+            return null;
+        }
+        const normalized = String(value).replace(" ", "T");
+        const date = new Date(normalized);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function formatDateTime(value) {
+        const date = parseDate(value);
+        if (!date) {
+            return "--";
+        }
+        return date.toLocaleString("zh-CN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+        });
+    }
+
+    function formatMoney(value) {
+        const amount = Number(value || 0);
+        return amount.toFixed(2);
+    }
+
+    function getProductStatus(product, now = new Date()) {
+        const stock = Number(product.stock || 0);
+        const startTime = parseDate(product.startTime);
+        const endTime = parseDate(product.endTime);
+
+        if (stock <= 0) {
+            return { key: "soldout", label: "已售罄" };
+        }
+        if (startTime && now < startTime) {
+            return { key: "upcoming", label: "即将开始" };
+        }
+        if (endTime && now > endTime) {
+            return { key: "ended", label: "已结束" };
+        }
+        return { key: "active", label: "进行中" };
+    }
+
+    function getCountdownText(product, now = new Date()) {
+        const status = getProductStatus(product, now);
+        const startTime = parseDate(product.startTime);
+        const endTime = parseDate(product.endTime);
+
+        if (status.key === "upcoming" && startTime) {
+            return "距离开始还有 " + formatDuration(startTime - now);
+        }
+        if (status.key === "active" && endTime) {
+            return "距离结束还有 " + formatDuration(endTime - now);
+        }
+        if (status.key === "soldout") {
+            return "商品库存已售空，可刷新查看是否有补货。";
+        }
+        return "当前活动已结束，请关注下一场秒杀。";
+    }
+
+    function formatDuration(ms) {
+        const safeMs = Math.max(0, ms);
+        const totalSeconds = Math.floor(safeMs / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const parts = [];
+        if (days > 0) {
+            parts.push(days + "天");
+        }
+        if (hours > 0 || days > 0) {
+            parts.push(String(hours).padStart(2, "0") + "时");
+        }
+        parts.push(String(minutes).padStart(2, "0") + "分");
+        parts.push(String(seconds).padStart(2, "0") + "秒");
+        return parts.join("");
+    }
+
+    function getDiscount(product) {
+        const original = Number(product.originalPrice || 0);
+        const current = Number(product.seckillPrice || 0);
+        if (!original || original <= 0) {
+            return "限时价";
+        }
+        const discount = ((current / original) * 10).toFixed(1);
+        return discount + " 折";
+    }
+
+    function getStockProgressClass(stock) {
+        const value = Number(stock || 0);
+        if (value <= 0) {
+            return "danger";
+        }
+        if (value < 20) {
+            return "warning";
+        }
+        return "";
+    }
+
+    function updateSummary(products) {
+        const counters = {
+            total: products.length,
+            active: 0,
+            upcoming: 0,
+            soldout: 0
+        };
+
+        products.forEach((product) => {
+            const status = getProductStatus(product).key;
+            if (status === "active") counters.active += 1;
+            if (status === "upcoming") counters.upcoming += 1;
+            if (status === "soldout") counters.soldout += 1;
+        });
+
+        summaryNodes.total.textContent = String(counters.total);
+        summaryNodes.active.textContent = String(counters.active);
+        summaryNodes.upcoming.textContent = String(counters.upcoming);
+        summaryNodes.soldout.textContent = String(counters.soldout);
+    }
+
+    function getFilteredProducts() {
+        if (activeFilter === "all") {
+            return allProducts;
+        }
+        return allProducts.filter((product) => getProductStatus(product).key === activeFilter);
+    }
+
+    function renderProducts() {
+        const products = getFilteredProducts();
+        statusLine.textContent = "共 " + allProducts.length + " 个商品，当前筛选显示 " + products.length + " 个。";
+
+        if (!products.length) {
+            productContainer.innerHTML = '<div class="empty">当前筛选条件下没有商品，换个状态看看或者稍后刷新。</div>';
+            return;
         }
 
-        // 显示商品列表
-        function displayProducts(products) {
-            const container = document.getElementById('product-container');
-            
-            if (products.length === 0) {
-                container.innerHTML = '<div class="loading">暂无商品</div>';
-                return;
-            }
+        const now = new Date();
+        productContainer.innerHTML = products.map((product) => {
+            const status = getProductStatus(product, now);
+            const stock = Number(product.stock || 0);
+            const progressWidth = Math.max(0, Math.min(100, stock));
+            const progressClass = getStockProgressClass(stock);
+            const disabled = seckillInFlight || status.key !== "active";
+            const buttonTextMap = {
+                active: "立即秒杀",
+                upcoming: "尚未开始",
+                ended: "活动结束",
+                soldout: "已售罄"
+            };
 
-            container.innerHTML = products.map(product => `
-                <div class="product-card">
-                    <h3 class="product-title">${escapeHtml(product.productName)}</h3>
-                    <p class="product-description">${escapeHtml(product.description)}</p>
-                    
-                    <div class="price-section">
-                        <span class="original-price">¥${formatPrice(product.originalPrice)}</span>
-                        <span class="seckill-price">¥${formatPrice(product.seckillPrice)}</span>
+            return `
+                <article class="product-card">
+                    <div class="card-top">
+                        <h2 class="product-name">${escapeHtml(product.productName || "未命名商品")}</h2>
+                        <span class="badge ${status.key}">${status.label}</span>
                     </div>
-                    
-                    <div class="stock-info ${getStockClass(product.stock)}">
-                        ${getStockText(product.stock)}
+                    <p class="description">${escapeHtml(product.description || "暂无商品描述。")}</p>
+                    <div class="price-row">
+                        <span class="price-current">¥${formatMoney(product.seckillPrice)}</span>
+                        <span class="price-origin">原价 ¥${formatMoney(product.originalPrice)}</span>
+                        <span class="discount">${getDiscount(product)}</span>
                     </div>
-                    
-                    <div class="time-info">
-                        ⏰ 秒杀时间：${formatTime(product.startTime)} - ${formatTime(product.endTime)}
+                    <div class="meta">
+                        <div class="meta-row">
+                            <span>活动开始</span>
+                            <span>${formatDateTime(product.startTime)}</span>
+                        </div>
+                        <div class="meta-row">
+                            <span>活动结束</span>
+                            <span>${formatDateTime(product.endTime)}</span>
+                        </div>
+                        <div class="meta-row">
+                            <span>剩余库存</span>
+                            <span>${stock} 件</span>
+                        </div>
                     </div>
-                    
-                    <button class="seckill-btn" onclick="seckill(${product.id})" ${product.stock <= 0 ? 'disabled' : ''}>
-                        ${product.stock <= 0 ? '已售罄' : '立即秒杀'}
-                    </button>
-                    
-                    <div class="server-info">
-                        <span class="badge">商品 ID: ${product.id}</span>
-                        <span>库存：${product.stock}</span>
+                    <div class="progress ${progressClass}">
+                        <div style="width: ${progressWidth}%;"></div>
                     </div>
-                </div>
-            `).join('');
-        }
+                    <div class="countdown"><strong>${status.label}</strong>，${getCountdownText(product, now)}</div>
+                    <div class="action">
+                        <button class="seckill-btn" type="button" data-product-id="${product.id}" ${disabled ? "disabled" : ""}>
+                            ${buttonTextMap[status.key]}
+                        </button>
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
 
-        // 秒杀功能
-        async function seckill(productId) {
-            if (!confirm('确定要参与秒杀吗？')) {
-                return;
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function setActiveFilter(filter) {
+        activeFilter = filter;
+        filterButtons.forEach((button) => {
+            button.classList.toggle("active", button.dataset.filter === filter);
+        });
+        renderProducts();
+    }
+
+    async function fetchProducts() {
+        refreshButton.disabled = true;
+        refreshButton.textContent = "刷新中...";
+        statusLine.textContent = "正在从服务端加载商品数据...";
+        clearPageMessage();
+
+        try {
+            const response = await fetch(API_BASE + "/list");
+            const result = await response.json();
+
+            if (result.code !== 200 || !Array.isArray(result.data)) {
+                throw new Error(result.msg || "商品列表返回异常。");
             }
 
-            const btn = event.target;
-            btn.disabled = true;
-            btn.textContent = '秒杀中...';
+            allProducts = result.data;
+            updateSummary(allProducts);
+            renderProducts();
+            statusLine.textContent = "商品数据已更新，倒计时会自动刷新。";
+        } catch (error) {
+            productContainer.innerHTML = '<div class="empty">商品加载失败，请稍后重试。</div>';
+            showPageMessage("error", "加载商品失败：" + (error.message || "请确认接口可用。"));
+            statusLine.textContent = "商品数据加载失败。";
+            console.error("load products failed", error);
+        } finally {
+            refreshButton.disabled = false;
+            refreshButton.textContent = "刷新商品列表";
+        }
+    }
 
-            try {
-                const response = await fetch(`${API_BASE}/seckill/${productId}`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-
-                if (data.code === 200 && data.data) {
-                    alert('🎉 秒杀成功！请尽快完成支付。');
-                    // 重新加载商品列表
-                    loadProducts();
-                } else {
-                    alert('❌ 秒杀失败：' + data.msg);
-                    btn.disabled = false;
-                    btn.textContent = '立即秒杀';
-                }
-            } catch (error) {
-                console.error('秒杀失败:', error);
-                alert('❌ 网络错误，请稍后重试');
-                btn.disabled = false;
-                btn.textContent = '立即秒杀';
-            }
+    async function handleSeckill(productId) {
+        if (seckillInFlight) {
+            return;
         }
 
-        // 工具函数
-        function getStockClass(stock) {
-            if (stock <= 0) return 'sold-out';
-            if (stock < 20) return 'low';
-            return '';
+        const product = allProducts.find((item) => String(item.id) === String(productId));
+        if (!product) {
+            showPageMessage("error", "未找到对应商品，请先刷新列表。");
+            return;
         }
 
-        function getStockText(stock) {
-            if (stock <= 0) return '🚫 已售罄';
-            if (stock < 20) return `🔥 库存紧张：剩余${stock}件`;
-            return `✅ 库存充足：${stock}件`;
+        const status = getProductStatus(product);
+        if (status.key !== "active") {
+            showPageMessage("error", "当前商品不在可秒杀状态。");
+            renderProducts();
+            return;
         }
 
-        function formatPrice(price) {
-            return parseFloat(price).toFixed(2);
+        const confirmed = window.confirm("确定参与“" + (product.productName || "当前商品") + "”的秒杀吗？");
+        if (!confirmed) {
+            return;
         }
 
-        function formatTime(timeStr) {
-            if (!timeStr) return '-';
-            const date = new Date(timeStr);
-            return date.toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
+        seckillInFlight = true;
+        showPageMessage("info", "正在提交秒杀请求，请稍候...");
+        renderProducts();
+
+        try {
+            const response = await fetch(API_BASE + "/seckill/" + productId, {
+                method: "POST"
             });
-        }
+            const result = await response.json();
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+            if (result.code === 200 && result.data) {
+                showPageMessage("info", "秒杀成功，正在刷新库存和活动状态...");
+                await fetchProducts();
+                showPageMessage("info", "秒杀成功，商品列表已刷新。");
+                return;
+            }
 
-        function showError(message) {
-            document.getElementById('product-container').innerHTML = 
-                `<div class="error-message">❌ ${message}</div>`;
+            showPageMessage("error", "秒杀失败：" + (result.msg || "请稍后重试。"));
+        } catch (error) {
+            showPageMessage("error", "秒杀请求失败，请检查服务状态。");
+            console.error("seckill request failed", error);
+        } finally {
+            seckillInFlight = false;
+            renderProducts();
         }
+    }
 
-        // 页面加载时获取商品列表
-        loadProducts();
-    </script>
+    function startCountdownTicker() {
+        if (countdownTimer) {
+            window.clearInterval(countdownTimer);
+        }
+        countdownTimer = window.setInterval(() => {
+            if (allProducts.length) {
+                updateSummary(allProducts);
+                renderProducts();
+            }
+        }, 1000);
+    }
+
+    filterButtons.forEach((button) => {
+        button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
+    });
+
+    refreshButton.addEventListener("click", fetchProducts);
+
+    productContainer.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+            return;
+        }
+        const button = target.closest("[data-product-id]");
+        if (!button) {
+            return;
+        }
+        handleSeckill(button.getAttribute("data-product-id"));
+    });
+
+    fetchProducts();
+    startCountdownTicker();
+</script>
 </body>
 </html>
