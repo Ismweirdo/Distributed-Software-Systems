@@ -1,332 +1,154 @@
-# ==================== 商品秒杀系统 - JMeter 压力测试指南 ====================
+# 商品秒杀系统 JMeter 测试指南
 
-## 一、环境准备
+本文档基于当前代码接口，给出可直接复用的 JMeter 压测方案。
 
-### 1.1 软件要求
-- Apache JMeter 5.4+ 
-- MySQL 8.0+
-- Redis 7.0+
-- Nginx 1.20+
-- Java 17+
+## 1. 测试前准备
 
-### 1.2 启动服务
+### 1.1 启动依赖
+- MySQL
+- Redis
+- （可选）Elasticsearch
 
-#### 1. 启动数据库和 Redis
-```bash
-docker-compose up -d mysql redis
+### 1.2 启动应用
+可选两种方式：
+
+- 单实例：`http://localhost:8083`
+- 双实例 + Nginx：`http://localhost`（Nginx 转发到 8081/8082）
+
+建议：
+- 测后端接口本身时，直接打 `8083`。
+- 测负载均衡与动静分离时，打 Nginx `80` 端口。
+
+## 2. 当前可测接口清单
+
+### 用户接口
+- `POST /api/users/register`
+- `POST /api/users/login`
+
+### 商品接口
+- `GET /api/products/list`
+- `GET /api/products/{id}`
+- `POST /api/products/seckill/{id}`
+
+### 搜索接口（可选）
+- `GET /api/search/keyword?keyword=手机&page=0&size=10`
+- `GET /api/search/name?name=iPhone&page=0&size=10`
+- `GET /api/search/price?minPrice=1000&maxPrice=5000&page=0&size=10`
+- `POST /api/search/sync`
+
+## 3. JMeter 测试计划建议结构
+
+```text
+Seckill Test Plan
+├── Thread Group - 商品列表
+│   ├── HTTP Request Defaults
+│   ├── HTTP Header Manager
+│   ├── HTTP Request (GET /api/products/list)
+│   └── Aggregate Report
+├── Thread Group - 商品详情缓存
+│   ├── HTTP Request (GET /api/products/1)
+│   └── Summary Report
+├── Thread Group - 秒杀接口
+│   ├── HTTP Request (POST /api/products/seckill/1)
+│   └── Aggregate Report
+└── Thread Group - Nginx 静态资源（可选）
+    ├── HTTP Request (GET /index.html)
+    ├── HTTP Request (GET /main.html)
+    └── HTTP Request (GET /products.html)
 ```
 
-#### 2. 初始化数据库
-```bash
-# 执行 SQL 脚本
-mysql -u root -p seckill_db < src/main/resources/db/init_seckill_product.sql
-```
+## 4. 场景 A：商品列表吞吐测试
 
-#### 3. 启动两个后端实例
+### 4.1 配置建议
+- Threads: 100
+- Ramp-Up: 10s
+- Duration: 60s
+- Method: `GET`
+- Path: `/api/products/list`
 
-**实例 1（端口 8081）:**
-```bash
-java -jar target/seckill-system-0.0.1-SNAPSHOT.jar --spring.profiles.active=instance1
-```
-
-**实例 2（端口 8082）:**
-```bash
-java -jar target/seckill-system-0.0.1-SNAPSHOT.jar --spring.profiles.active=instance2
-```
-
-#### 4. 启动 Nginx
-```bash
-# Windows: 下载 Nginx for Windows，解压后运行
-nginx.exe
-
-# Linux/Mac:
-sudo nginx -c /path/to/nginx.conf
-```
-
----
-
-## 二、JMeter 测试脚本说明
-
-### 2.1 测试计划结构
-
-```
-商品秒杀系统测试计划
-├── 线程组 - 负载均衡测试
-│   ├── HTTP 请求 - 获取商品列表
-│   └── 查看结果树
-├── 线程组 - 商品详情缓存测试
-│   ├── HTTP 请求 - 获取商品详情（带缓存）
-│   └── 聚合报告
-├── 线程组 - 动静分离测试
-│   ├── HTTP 请求 - 静态 HTML 页面
-│   ├── HTTP 请求 - CSS 文件
-│   ├── HTTP 请求 - JS 文件
-│   └── 聚合报告
-└── 线程组 - 秒杀接口压测
-    ├── HTTP 请求 - 执行秒杀
-    └── 聚合报告
-```
-
-### 2.2 创建测试脚本
-
-#### 步骤 1: 添加线程组
-右键 "Test Plan" → Add → Threads (Users) → Thread Group
-
-配置示例:
-- Number of Threads (users): 100
-- Ramp-Up Period (in seconds): 10
-- Loop Count: ∞ (勾选 Infinite)
-- Duration (seconds): 60
-
-#### 步骤 2: 添加 HTTP 请求默认值
-右键 Thread Group → Add → Config Element → HTTP Request Defaults
-
-配置:
-- Server Name or IP: localhost
-- Port: 80
-- Protocol: http
-
-#### 步骤 3: 添加 HTTP 信息头管理器
-右键 Thread Group → Add → Config Element → HTTP Header Manager
-
-添加:
-- Content-Type: application/json
-
-#### 步骤 4: 添加监听器
-右键 Thread Group → Add → Listener → 选择以下监听器:
-- View Results Tree (查看结果树)
-- Summary Report (汇总报告)
-- Aggregate Report (聚合报告)
-- Graph Results (图形结果)
-
----
-
-## 三、具体测试场景
-
-### 3.1 负载均衡测试
-
-**目的**: 验证 Nginx 将请求均匀分配到两个后端实例
-
-#### 测试配置:
-1. 创建线程组："负载均衡测试"
-2. 添加 HTTP 请求:
-   - Path: `/api/products/list`
-   - Method: GET
-3. 添加响应断言，验证返回 code=200
-
-#### 观察指标:
-- 查看两个后端实例的日志，确认请求数大致相等
-- 检查响应头 `X-Upstream-Server`，确认请求被分发到不同服务器
-
-#### 预期结果:
-- 实例 1 和实例 2 的请求比例接近 1:1（轮询模式）
-- 平均响应时间 < 200ms
-
----
-
-### 3.2 动静分离测试
-
-**目的**: 验证 Nginx 直接提供静态资源，不经过后端服务
-
-#### 测试配置:
-1. 创建线程组："动静分离测试"
-2. 添加多个 HTTP 请求:
-   
-   **请求 1 - HTML 页面:**
-   - Path: `/index.html`
-   - 预期响应头：`X-Cache-Status: STATIC`
-   
-   **请求 2 - CSS 文件:**
-   - Path: `/style.css` (如果有的话)
-   - 预期响应头：`X-Cache-Status: STATIC`
-   
-   **请求 3 - JS 文件:**
-   - Path: `/app.js` (如果有的话)
-   - 预期响应头：`X-Cache-Status: STATIC`
-
-#### 观察指标:
-- 静态资源响应时间应 < 50ms
-- 响应头包含 `X-Cache-Status: STATIC`
-- 后端服务日志中不应该有静态资源访问记录
-
-#### 预期结果:
-- 静态资源响应时间显著快于动态 API
-- Nginx 访问日志显示静态资源直接由 Nginx 提供
-
----
-
-### 3.3 分布式缓存测试
-
-**目的**: 验证 Redis 缓存效果，以及穿透/击穿/雪崩解决方案
-
-#### 测试配置:
-1. 创建线程组："缓存性能测试"
-2. 添加 HTTP 请求:
-   - Path: `/api/products/1`
-   - Method: GET
-3. 设置高并发：200 线程，Ramp-Up 5 秒
-
-#### 测试步骤:
-
-**第一次请求（缓存未命中）:**
-```bash
-curl http://localhost/api/products/1
-```
-观察后端日志：应该显示"缓存未命中，查询数据库"
-
-**第二次请求（缓存命中）:**
-```bash
-curl http://localhost/api/products/1
-```
-观察后端日志：应该显示"缓存命中"
-
-#### 压测观察指标:
-- 首次请求响应时间：~100-200ms（数据库查询）
-- 后续请求响应时间：~10-50ms（缓存读取）
-- Redis 命中率：> 90%
-
-#### 验证缓存穿透保护:
-```bash
-# 请求不存在的商品 ID（如 999999）
-curl http://localhost/api/products/999999
-```
-观察日志：应该显示"布隆过滤器拦截"或"设置空值缓存"
-
----
-
-### 3.4 秒杀接口压测
-
-**目的**: 测试高并发下的库存扣减和缓存更新
-
-#### 测试配置:
-1. 创建线程组："秒杀接口压测"
-2. 添加 HTTP 请求:
-   - Path: `/api/products/seckill/1`
-   - Method: POST
-3. 配置:
-   - Threads: 50
-   - Ramp-Up: 5 秒
-   - Loop Count: 10
-
-#### 观察指标:
-- 成功响应数 vs 失败响应数
+### 4.2 观察指标
 - 平均响应时间
-- 数据库库存数量是否正确扣减
-- 缓存是否正确删除和重建
+- 吞吐量（TPS/QPS）
+- 错误率
 
-#### 预期结果:
-- 不会出现超卖现象（库存不会变成负数）
-- 缓存能够正确更新
-- 响应时间随着缓存命中率提高而降低
+## 5. 场景 B：商品详情缓存命中测试
 
----
+### 5.1 目标
+验证 `GET /api/products/{id}` 在缓存预热前后的响应差异。
 
-## 四、不同负载均衡算法测试
+### 5.2 操作建议
+1. 先用小并发请求 `GET /api/products/1` 预热。
+2. 再用较高并发重复请求同一个 ID。
+3. 对比两轮平均响应时间。
 
-### 4.1 修改 Nginx 配置测试不同算法
+### 5.3 期望
+- 预热后响应时间明显下降。
+- 错误率保持较低。
 
-#### 1. 轮询（默认）
-```nginx
-location /api/ {
-    proxy_pass http://seckill-backend-roundrobin;
-}
-```
+## 6. 场景 C：秒杀接口并发扣减测试
 
-#### 2. 权重配置
-```nginx
-location /api/ {
-    proxy_pass http://seckill-backend-weighted;
-}
-```
-预期：实例 1 处理 75% 请求，实例 2 处理 25%
+### 6.1 配置建议
+- Threads: 50
+- Ramp-Up: 5s
+- Loop Count: 10
+- Method: `POST`
+- Path: `/api/products/seckill/1`
 
-#### 3. IP Hash
-```nginx
-location /api/ {
-    proxy_pass http://seckill-backend-iphash;
-}
-```
-预期：同一 IP 的请求总是到同一台服务器
+### 6.2 观察点
+- 成功/失败响应比例
+- 是否出现超卖（库存负数）
+- 秒杀后商品详情接口返回库存是否持续下降
 
-#### 4. 最少连接
-```nginx
-location /api/ {
-    proxy_pass http://seckill-backend-leastconn;
-}
-```
-预期：请求优先到当前连接数最少的服务器
+## 7. 场景 D：Nginx 负载均衡测试（可选）
 
----
+### 7.1 前提
+- 已启动 `instance1`（8081）和 `instance2`（8082）
+- Nginx `location /api/` 已代理到 `seckill-backend-roundrobin`
 
-## 五、监控与结果分析
+### 7.2 压测接口
+- `GET http://localhost/api/products/list`
 
-### 5.1 关键指标
+### 7.3 验证方式
+- 查看响应头 `X-Upstream-Server` 分布
+- 查看两个实例日志，确认请求分担
 
-#### 响应时间
-- 优秀：< 100ms
-- 良好：100-500ms
-- 一般：500ms-1s
-- 差：> 1s
+## 8. 场景 E：Nginx 动静分离测试（可选）
 
-#### 吞吐量 (TPS/QPS)
-计算公式：
-```
-TPS = 总请求数 / 测试时间
-```
+压测静态资源：
+- `/index.html`
+- `/main.html`
+- `/products.html`
 
-#### 错误率
-```
-错误率 = (失败请求数 / 总请求数) × 100%
-```
-目标：< 0.1%
+观察点：
+- 静态资源响应时间通常应低于动态接口
+- 响应头可观察 `X-Cache-Status`（取决于 Nginx 对应 location）
 
-### 5.2 使用 JMeter 插件增强监控
+## 9. 搜索接口压测提示
 
-安装插件管理器：
-https://jmeter-plugins.org/install/Install/
+默认 Elasticsearch 关闭时，搜索接口会返回空分页，这属于预期。
+如需测试真实搜索性能，请先：
 
-推荐插件:
-- PerfMon Metrics Collector - 监控服务器资源
-- Response Times Over Time - 响应时间趋势图
-- Active Threads Over Time - 活跃线程数
+1. 启用 `elasticsearch.enabled=true`
+2. 启动 ES 并保证索引可写
+3. 调用 `POST /api/search/sync` 完成同步
 
-### 5.3 查看后端日志
+## 10. 结果记录模板
 
-**实例 1 日志:**
-```bash
-tail -f logs/instance1.log | grep "缓存"
-```
+| 场景 | 并发 | 持续时间 | 平均响应(ms) | TPS | 错误率 |
+|---|---:|---:|---:|---:|---:|
+| 商品列表 |  |  |  |  |  |
+| 商品详情缓存 |  |  |  |  |  |
+| 秒杀接口 |  |  |  |  |  |
+| Nginx 负载均衡 |  |  |  |  |  |
+| Nginx 静态资源 |  |  |  |  |  |
 
-**实例 2 日志:**
-```bash
-tail -f logs/instance2.log | grep "缓存"
-```
+## 11. 常见问题
 
-**Nginx 访问日志:**
-```bash
-tail -f /var/log/nginx/access.log
-```
+### 11.1 出现大量连接失败
+优先检查：服务是否已启动、端口是否正确、JMeter 目标域名是否可达。
 
-## 七、测试报告
+### 11.2 秒杀接口全失败
+检查测试商品库存是否已耗尽；可在 MySQL 中重置库存后重测。
 
-### 测试环境
-- CPU: 
-- 内存: 
-- 网络: 
-- 后端实例数：2
-- Nginx 版本: 
-
-### 测试场景
-1. 负载均衡 - 轮询算法
-2. 动静分离 - 静态资源访问
-3. 缓存性能 - 商品详情查询
-4. 高并发 - 秒杀接口
-
-### 测试结果汇总
-
-| 测试场景 | 并发数 | 平均响应时间 | TPS | 错误率 |
-|---------|--------|-------------|-----|--------|
-| 负载均衡 | 100 | 150ms | 650 | 0% |
-| 动静分离 | 200 | 25ms | 2800 | 0% |
-| 缓存查询 | 200 | 45ms | 1900 | 0% |
-| 秒杀接口 | 50 | 280ms | 175 | 2% |
+### 11.3 搜索接口始终空结果
+默认 ES 关闭，需先启用并同步数据。
