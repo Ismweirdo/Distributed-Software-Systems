@@ -9,7 +9,7 @@
 - 可选的 Elasticsearch 搜索（`/api/search/*`）
 - Nginx 负载均衡与动静分离示例配置（`nginx.conf`）
 
-## 当前代码状态（和文档强相关）
+## 当前代码状态
 - 默认启动端口是 `8083`（`src/main/resources/application.yml`）。
 - `instance1`/`instance2` profile 分别使用 `8081` 和 `8082`。
 - Elasticsearch 默认关闭：`elasticsearch.enabled=false`。

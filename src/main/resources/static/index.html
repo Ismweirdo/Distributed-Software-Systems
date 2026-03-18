@@ -3,372 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>秒杀商城 - 首页</title>
+    <title>秒杀商城 - 登录与注册</title>
     <style>
+        :root {
+            --bg: #081c2c;
+            --panel: rgba(7, 17, 27, 0.78);
+            --panel-border: rgba(147, 197, 253, 0.16);
+            --text: #ecf8ff;
+            --muted: #9db2c6;
+            --primary: #ff7a59;
+            --primary-strong: #ff5c39;
+            --secondary: #50c7c7;
+            --success: #43c59e;
+            --danger: #ff6b6b;
+            --warning: #f4c95d;
+            --input: rgba(10, 24, 38, 0.9);
+            --shadow: 0 24px 60px rgba(4, 12, 20, 0.45);
+            --radius: 28px;
+        }
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            background-color: #f5f5f5;
-            color: #333;
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(255, 122, 89, 0.25), transparent 35%),
+                radial-gradient(circle at top right, rgba(80, 199, 199, 0.2), transparent 30%),
+                linear-gradient(135deg, #06131f 0%, #0b2940 52%, #12385a 100%);
+            overflow-x: hidden;
         }
 
-        /* 顶部导航栏 */
-        .header {
-            background-color: #1a1a1a;
-            color: white;
-            padding: 0 20px;
-            height: 40px;
-            line-height: 40px;
-            font-size: 12px;
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: auto;
+            width: 26rem;
+            height: 26rem;
+            border-radius: 50%;
+            filter: blur(10px);
+            opacity: 0.38;
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .header-content {
-            max-width: 1200px;
+        body::before {
+            top: -8rem;
+            right: -8rem;
+            background: rgba(255, 122, 89, 0.3);
+        }
+
+        body::after {
+            bottom: -10rem;
+            left: -8rem;
+            background: rgba(80, 199, 199, 0.24);
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            width: min(1160px, calc(100% - 32px));
             margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .logo {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ff6700;
-        }
-
-        .nav-links a {
-            color: #b0b0b0;
-            text-decoration: none;
-            margin-left: 20px;
-        }
-
-        .nav-links a:hover {
-            color: white;
-        }
-
-        /* 主导航栏 */
-        .main-nav {
-            background-color: #292929;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .nav-logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ff6700;
-        }
-
-        .nav-menu {
-            display: flex;
-            list-style: none;
-        }
-
-        .nav-menu li {
-            margin: 0 15px;
-        }
-
-        .nav-menu a {
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            transition: color 0.3s;
-        }
-
-        .nav-menu a:hover {
-            color: #ff6700;
-        }
-
-        .search-box {
-            display: flex;
-        }
-
-        .search-input {
-            width: 300px;
-            height: 40px;
-            padding: 0 15px;
-            border: none;
-            font-size: 14px;
-        }
-
-        .search-btn {
-            width: 60px;
-            background-color: #ff6700;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        /* 轮播图区域 */
-        .banner {
-            height: 460px;
-            background: linear-gradient(45deg, #ff6700, #ff8e3c);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-        }
-
-        /* 主要内容区 */
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .section-title {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-            font-size: 20px;
-            color: #333;
-        }
-
-        /* 商品展示区 */
-        .products-grid {
+            min-height: 100vh;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .product-card {
-            border: 1px solid #eee;
-            border-radius: 4px;
-            padding: 15px;
-            text-align: center;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .product-image {
-            width: 100%;
-            height: 150px;
-            background-color: #f8f8f8;
-            display: flex;
+            grid-template-columns: 1.12fr 0.88fr;
+            gap: 28px;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-
-        .product-image img {
-            max-width: 100%;
-            max-height: 100%;
-        }
-
-        .product-name {
-            font-size: 14px;
-            margin-bottom: 5px;
-            height: 40px;
-            overflow: hidden;
-        }
-
-        .product-price {
-            color: #ff6700;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .product-original-price {
-            color: #999;
-            font-size: 12px;
-            text-decoration: line-through;
-            margin-left: 5px;
-        }
-
-        /* 底部 */
-        .footer {
-            background-color: #2e2e2e;
-            color: #999;
             padding: 40px 0;
-            margin-top: 40px;
         }
 
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
+        .hero,
+        .auth-card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
         }
 
-        .footer-links {
-            margin-bottom: 20px;
+        .hero {
+            padding: 44px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
         }
 
-        .footer-links a {
-            color: #999;
-            text-decoration: none;
-            margin: 0 10px;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <div class="header">
-        <div class="header-content">
-            <div class="left">欢迎来到秒杀商城！</div>
-            <div class="right">
-                <a href="#">登录</a>
-                <a href="#">注册</a>
-                <a href="#">我的订单</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- 主导航栏 -->
-    <div class="main-nav">
-        <div class="nav-container">
-            <div class="nav-logo">秒杀商城</div>
-            <ul class="nav-menu">
-                <li><a href="index.html">首页</a></li>
-                <li><a href="products.html">商品</a></li>
-                <li><a href="#">秒杀活动</a></li>
-                <li><a href="#">优惠券</a></li>
-                <li><a href="#">品牌</a></li>
-                <li><a href="#">排行榜</a></li>
-            </ul>
-            <div class="search-box">
-                <input type="text" class="search-input" placeholder="搜索商品...">
-                <button class="search-btn">搜索</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 轮播图 -->
-    <div class="banner">
-        限时秒杀，超值优惠！
-    </div>
-
-    <!-- 主要内容 -->
-    <div class="container">
-        <div class="section-title">热门商品</div>
-        <div class="products-grid">
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品1" alt="商品1">
-                </div>
-                <div class="product-name">高性能笔记本电脑，轻薄便携</div>
-                <div class="product-price">¥3999 <span class="product-original-price">¥5999</span></div>
-            </div>
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品2" alt="商品2">
-                </div>
-                <div class="product-name">智能手表，健康监测</div>
-                <div class="product-price">¥599 <span class="product-original-price">¥899</span></div>
-            </div>
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品3" alt="商品3">
-                </div>
-                <div class="product-name">无线蓝牙耳机，音质卓越</div>
-                <div class="product-price">¥299 <span class="product-original-price">¥499</span></div>
-            </div>
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品4" alt="商品4">
-                </div>
-                <div class="product-name">高清显示器，护眼舒适</div>
-                <div class="product-price">¥1299 <span class="product-original-price">¥1699</span></div>
-            </div>
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品5" alt="商品5">
-                </div>
-                <div class="product-name">智能手机，拍照神器</div>
-                <div class="product-price">¥2599 <span class="product-original-price">¥3299</span></div>
-            </div>
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品6" alt="商品6">
-                </div>
-                <div class="product-name">平板电脑，娱乐办公</div>
-                <div class="product-price">¥1899 <span class="product-original-price">¥2399</span></div>
-            </div>
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品7" alt="商品7">
-                </div>
-                <div class="product-name">机械键盘，游戏利器</div>
-                <div class="product-price">¥399 <span class="product-original-price">¥599</span></div>
-            </div>
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="https://via.placeholder.com/150x150/ff6700/ffffff?text=商品8" alt="商品8">
-                </div>
-                <div class="product-name">移动电源，大容量快充</div>
-                <div class="product-price">¥129 <span class="product-original-price">¥199</span></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 底部 -->
-    <div class="footer">
-        <div class="footer-content">
-            <div class="footer-links">
-                <a href="#">关于我们</a> |
-                <a href="#">联系我们</a> |
-                <a href="#">人才招聘</a> |
-                <a href="#">商家入驻</a> |
-                <a href="#">广告服务</a>
-            </div>
-            <p>© 2026 秒杀商城 版权所有</p>
-        </div>
-    </div>
-
-    <script>
-        // 简单的商品点击事件
-        document.querySelectorAll('.product-card').forEach(card => {
-            card.addEventListener('click', () => {
-                alert('即将跳转到商品详情页面');
-            });
-        });
-
-        // 搜索功能
-        document.querySelector('.search-btn').addEventListener('click', () => {
-            const keyword = document.querySelector('.search-input').value;
-            if(keyword.trim()) {
-                alert(`搜索关键词: ${keyword}`);
-            } else {
-                alert('请输入搜索关键词');
-            }
-        });
-
-        // 回车搜索
-        document.querySelector('.search-input').addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') {
-                document.querySelector('.search-btn').click();
-            }
-        });
-    </script>
-</body>
-</html>
+        .eyebrow {
             display: inline-flex;
             align-items: center;
             width: fit-content;
