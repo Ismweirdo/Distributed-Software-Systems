@@ -7,7 +7,7 @@ import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 /**
  * 商品 ES 仓库接口

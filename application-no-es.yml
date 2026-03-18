@@ -11,16 +11,13 @@ spring:
       port: 6379
     elasticsearch:
       repositories:
-        enabled: ${elasticsearch.enabled:true}
-      uris: http://127.0.0.1:9200
-      username: elastic
-      password: elastic
+        enabled: false
 
   main:
     allow-circular-references: true
 
 elasticsearch:
-  enabled: true
+  enabled: false
 
 mybatis-plus:
   configuration:
