@@ -4,7 +4,7 @@
 本项目是基于 `Spring Boot 3.1` 的秒杀示例系统，包含以下能力：
 
 - 用户注册与登录（`/api/users/*`）
-- 商品列表、商品详情、秒杀下单（`/api/products/*`）
+- 商品列表、商品详情、秒杀下单（Redis 预扣 + Kafka 异步创建订单）
 - Redis 缓存（空值缓存、互斥锁、随机 TTL）
 - 可选的 Elasticsearch 搜索（`/api/search/*`）
 - Nginx 负载均衡与动静分离示例配置（`nginx.conf`）
@@ -21,6 +21,7 @@
 - Spring Boot 3.1.8
 - MyBatis-Plus 3.5.6
 - dynamic-datasource 4.2.0
+- ShardingSphere-JDBC 5.2.1（可选 profile）
 - Redis
 - MySQL 8
 - Elasticsearch（可选）
@@ -96,6 +97,37 @@ docker-compose up -d
 - 从库承担读流量（`slave_1`、`slave_2`，随机路由）
 - Compose 启动时会执行 `mysql-replication-init` 一次性任务，完成 `CHANGE REPLICATION SOURCE TO ...` 配置
 
+## 可选：ShardingSphere 分库分表（按 user_id 分库，按 order_id 分表）
+
+该模式与现有 `dynamic-datasource` 读写分离是二选一：
+- 默认模式：`seckill.datasource.mode=dynamic`
+- 分片模式：`--spring.profiles.active=sharding`（会自动关闭 dynamic-datasource 自动配置）
+
+### 1. 准备两套可写库
+- `seckill_db_0`（示例端口 `3310`）
+- `seckill_db_1`（示例端口 `3311`）
+
+初始化脚本：
+- `src/main/resources/db/sharding/init_sharding_ds0.sql`
+- `src/main/resources/db/sharding/init_sharding_ds1.sql`
+
+### 2. 启动分片模式
+
+```bash
+java -jar target/seckill-system-0.0.1-SNAPSHOT.jar --spring.profiles.active=sharding
+```
+
+可用环境变量：
+- `SHARDING_DS0_URL` / `SHARDING_DS0_USERNAME` / `SHARDING_DS0_PASSWORD`
+- `SHARDING_DS1_URL` / `SHARDING_DS1_USERNAME` / `SHARDING_DS1_PASSWORD`
+
+### 3. 分片规则
+- `t_seckill_order` 逻辑表
+- 分库：`ds_${user_id % 2}`
+- 分表：`t_seckill_order_${order_id % 2}`
+
+说明：`/api/orders/user?userId=...` 会按用户路由到单库，`/api/orders/{orderId}` 在未携带 `userId` 时可能跨库查询。
+
 ## API 说明
 
 统一返回结构：
@@ -123,15 +155,32 @@ curl -X POST http://localhost:8083/api/users/register \
 ### 商品接口
 - `GET /api/products/list`
 - `GET /api/products/{id}`
-- `POST /api/products/seckill/{id}`
+- `POST /api/products/seckill/{id}?userId={userId}`（返回 `orderId`，表示请求已入队）
 
 示例：
 
 ```bash
 curl http://localhost:8083/api/products/list
 curl http://localhost:8083/api/products/1
-curl -X POST http://localhost:8083/api/products/seckill/1
+curl -X POST "http://localhost:8083/api/products/seckill/1?userId=1001"
 ```
+
+### 订单接口
+- `GET /api/orders/{orderId}`
+- `GET /api/orders/user?userId={userId}`
+
+示例：
+
+```bash
+curl http://localhost:8083/api/orders/123456789012345678
+curl "http://localhost:8083/api/orders/user?userId=1001"
+```
+
+### 秒杀链路说明（异步削峰）
+- 入口先在 Redis 做原子预扣库存并校验用户是否重复下单。
+- 预扣成功后投递 Kafka `seckill.order.create`，由消费者异步创建订单。
+- 消费端在数据库事务中执行：条件扣减库存（`stock > 0`）+ 写订单。
+- 订单表 `t_seckill_order` 增加唯一键 `uk_user_product(user_id, product_id)`，确保同一用户同一商品只成功一次。
 
 ### 搜索接口（可选）
 - `GET /api/search/keyword?keyword=手机&page=0&size=10`

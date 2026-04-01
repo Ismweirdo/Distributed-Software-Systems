@@ -436,6 +436,7 @@
             </div>
             <div class="hero-actions">
                 <a class="btn btn-secondary" href="/main.html">返回主页</a>
+                <a class="btn btn-secondary" href="/orders.html">我的订单</a>
                 <button id="refresh-btn" class="btn btn-primary" type="button">刷新商品列表</button>
             </div>
         </div>
@@ -494,6 +495,11 @@
 <script>
     const API_BASE = "/api/products";
     const SEARCH_BASE = "/api/search";
+    const STORAGE_KEYS = {
+        username: "seckill_username",
+        token: "seckill_login_token"
+    };
+
     const productContainer = document.getElementById("product-container");
     const pageMessage = document.getElementById("page-message");
     const statusLine = document.getElementById("status-line");
@@ -517,6 +523,14 @@
     let countdownTimer = null;
     let seckillInFlight = false;
     let currentView = "list";
+
+    function getUserId() {
+        const token = localStorage.getItem(STORAGE_KEYS.token);
+        if (token && token.startsWith("login_success_")) {
+            return token.replace("login_success_", "");
+        }
+        return "1"; // Fallback to 1 if no valid token
+    }
 
     function updateSearchFormByMode() {
         const mode = searchMode.value;
@@ -933,7 +947,8 @@
         renderProducts();
 
         try {
-            const response = await fetch(API_BASE + "/seckill/" + productId, {
+            const userId = getUserId();
+            const response = await fetch(API_BASE + "/seckill/" + productId + "?userId=" + userId, {
                 method: "POST"
             });
             const result = await response.json();

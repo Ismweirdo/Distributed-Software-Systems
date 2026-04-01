@@ -3,6 +3,8 @@ package com.seckill.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.seckill.entity.SeckillProduct;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface SeckillProductMapper extends BaseMapper<SeckillProduct> {
@@ -16,4 +18,7 @@ public interface SeckillProductMapper extends BaseMapper<SeckillProduct> {
                 .map(SeckillProduct::getId)
                 .toList();
     }
+
+    @Update("update seckill_product set stock = stock - 1, update_time = now() where id = #{productId} and stock > 0")
+    int decreaseStock(@Param("productId") Long productId);
 }

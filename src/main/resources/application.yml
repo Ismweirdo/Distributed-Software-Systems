@@ -58,6 +58,8 @@ elasticsearch:
   enabled: ${ELASTICSEARCH_ENABLED:true}
 
 seckill:
+  datasource:
+    mode: dynamic
   kafka:
     topics:
       order-create: seckill.order.create

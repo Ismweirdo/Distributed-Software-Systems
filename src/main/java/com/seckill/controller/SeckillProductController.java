@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,7 +35,9 @@ public class SeckillProductController {
     }
 
     @PostMapping("/seckill/{id}")
-    public Result<Boolean> seckillProduct(@PathVariable @NotNull @Min(1) Long id) {
-        return productService.seckillProduct(id);
+    public Result<Long> seckillProduct(
+            @PathVariable @NotNull @Min(1) Long id,
+            @RequestParam @NotNull @Min(1) Long userId) {
+        return productService.seckillProduct(id, userId);
     }
 }

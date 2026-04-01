@@ -11,4 +11,5 @@ public interface SeckillProductService extends IService<SeckillProduct> {
     Result<List<SeckillProductVO>> listProducts();
     Result<SeckillProductVO> getProductById(Long id);
     Result<Boolean> seckillProduct(Long productId);
+    Result<Long> seckillProduct(Long productId, Long userId);
 }

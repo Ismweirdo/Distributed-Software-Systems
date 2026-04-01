@@ -1,0 +1,60 @@
+seckill:
+  datasource:
+    mode: sharding
+
+spring:
+  autoconfigure:
+    exclude:
+      - com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration
+
+  datasource:
+    dynamic:
+      enabled: false
+
+  sql:
+    init:
+      mode: never
+
+  shardingsphere:
+    datasource:
+      names: ds_0,ds_1
+      ds_0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: ${SHARDING_DS0_URL:jdbc:mysql://127.0.0.1:3310/seckill_db_0?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+        username: ${SHARDING_DS0_USERNAME:root}
+        password: ${SHARDING_DS0_PASSWORD:123456}
+      ds_1:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: ${SHARDING_DS1_URL:jdbc:mysql://127.0.0.1:3311/seckill_db_1?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+        username: ${SHARDING_DS1_USERNAME:root}
+        password: ${SHARDING_DS1_PASSWORD:123456}
+
+    rules:
+      sharding:
+        default-data-source-name: ds_0
+        tables:
+          t_seckill_order:
+            actual-data-nodes: ds_${0..1}.t_seckill_order_${0..1}
+            database-strategy:
+              standard:
+                sharding-column: user_id
+                sharding-algorithm-name: order-db-inline
+            table-strategy:
+              standard:
+                sharding-column: order_id
+                sharding-algorithm-name: order-table-inline
+        sharding-algorithms:
+          order-db-inline:
+            type: INLINE
+            props:
+              algorithm-expression: ds_${user_id % 2}
+          order-table-inline:
+            type: INLINE
+            props:
+              algorithm-expression: t_seckill_order_${order_id % 2}
+
+    props:
+      sql-show: true
+
