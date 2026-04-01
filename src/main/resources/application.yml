@@ -44,6 +44,10 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
+        max.block.ms: 2000
+        request.timeout.ms: 2000
+        delivery.timeout.ms: 4000
+      retries: 0
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -60,7 +64,11 @@ elasticsearch:
 seckill:
   datasource:
     mode: dynamic
+  order:
+    pending-ttl-seconds: 60
+    failed-ttl-seconds: 120
   kafka:
+    send-timeout-ms: 1500
     topics:
       order-create: seckill.order.create
       order-pay: seckill.order.pay

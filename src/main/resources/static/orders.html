@@ -189,6 +189,11 @@
     const orderContainer = document.getElementById("order-container");
     const messageBox = document.getElementById("message");
 
+    const UI_TEXT = {
+        empty: "暂无订单，去秒杀页看看吧。",
+        loadFailed: "加载订单失败"
+    };
+
     function getUserId() {
         const token = localStorage.getItem(STORAGE_KEYS.token);
         if (token && token.startsWith("login_success_")) {
@@ -200,6 +205,10 @@
     function showMessage(type, text) {
         messageBox.textContent = text;
         messageBox.className = "message show " + type;
+    }
+
+    function renderEmpty(text) {
+        orderContainer.innerHTML = '<div class="empty">' + text + '</div>';
     }
 
     function formatMoney(value) {
@@ -223,7 +232,7 @@
 
             const orders = result.data;
             if (orders.length === 0) {
-                orderContainer.innerHTML = '<div class="empty">暂无订单，快去秒杀页面逛逛吧。</div>';
+                renderEmpty(UI_TEXT.empty);
                 return;
             }
 
@@ -245,7 +254,7 @@
 
         } catch (error) {
             orderContainer.innerHTML = '';
-            showMessage('error', "加载订单失败：" + error.message);
+            showMessage('error', UI_TEXT.loadFailed + "：" + error.message);
         }
     }
 

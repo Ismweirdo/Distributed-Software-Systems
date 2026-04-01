@@ -495,6 +495,7 @@
 <script>
     const API_BASE = "/api/products";
     const SEARCH_BASE = "/api/search";
+    const ORDER_BASE = "/api/orders";
     const STORAGE_KEYS = {
         username: "seckill_username",
         token: "seckill_login_token"
@@ -524,12 +525,57 @@
     let seckillInFlight = false;
     let currentView = "list";
 
+    const UI_TEXT = {
+        queueing: "订单排队中",
+        orderQueryFailed: "查询订单状态失败",
+        orderPendingTimeout: "下单处理中，请稍后到“我的订单”查看",
+        loadFailed: "加载商品失败",
+        searchInputRequired: "请输入搜索条件",
+        rangeSwapped: "已自动纠正价格区间",
+        searchDone: "搜索完成",
+        searchFallback: "搜索服务不可用，已切本地匹配",
+        productMissing: "商品未找到，请刷新后重试",
+        productNotActive: "当前商品不可秒杀",
+        submitting: "正在提交请求...",
+        accepted: "请求已受理，订单排队中",
+        created: "下单成功，订单已创建",
+        failed: "下单失败",
+        seckillRequestFailed: "请求失败，请检查服务状态"
+    };
+
+    function notify(type, text) {
+        showPageMessage(type, text);
+    }
+
+    async function pollOrderStatus(orderId, maxAttempts = 8, intervalMs = 1000) {
+        for (let i = 0; i < maxAttempts; i++) {
+            const response = await fetch(ORDER_BASE + "/" + encodeURIComponent(orderId));
+            const result = await response.json();
+            if (result.code !== 200 || !result.data) {
+                throw new Error(result.msg || UI_TEXT.orderQueryFailed);
+            }
+
+            const status = result.data.status;
+            const message = result.data.message || "";
+            if (status === "CREATED") {
+                return { status, message };
+            }
+            if (status === "FAILED") {
+                return { status, message };
+            }
+
+            notify("info", UI_TEXT.queueing + "（" + (i + 1) + "/" + maxAttempts + "）" + (message ? "：" + message : ""));
+            await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+        }
+        return { status: "TIMEOUT", message: UI_TEXT.orderPendingTimeout };
+    }
+
     function getUserId() {
         const token = localStorage.getItem(STORAGE_KEYS.token);
         if (token && token.startsWith("login_success_")) {
             return token.replace("login_success_", "");
         }
-        return "1"; // Fallback to 1 if no valid token
+        return "1";
     }
 
     function updateSearchFormByMode() {
@@ -859,7 +905,7 @@
             statusLine.textContent = "商品数据已更新，倒计时会自动刷新。";
         } catch (error) {
             productContainer.innerHTML = '<div class="empty">商品加载失败，请稍后重试。</div>';
-            showPageMessage("error", "加载商品失败：" + (error.message || "请确认接口可用。"));
+            notify("error", UI_TEXT.loadFailed + "：" + (error.message || "请稍后重试"));
             statusLine.textContent = "商品数据加载失败。";
             console.error("load products failed", error);
         } finally {
@@ -873,7 +919,7 @@
         const a = searchInputA.value.trim();
         const b = searchInputB.value.trim();
         if (!a) {
-            showPageMessage("error", "请输入搜索条件。");
+            notify("error", UI_TEXT.searchInputRequired);
             return;
         }
         searchButton.disabled = true;
@@ -893,7 +939,7 @@
                 const finalMin = Math.min(minPrice, maxPrice);
                 const finalMax = Math.max(minPrice, maxPrice);
                 if (finalMin !== minPrice || finalMax !== maxPrice) {
-                    showPageMessage("info", "检测到区间顺序相反，已自动按最小价到最大价搜索。");
+                    notify("info", UI_TEXT.rangeSwapped);
                 }
                 url = SEARCH_BASE + "/price?minPrice=" + encodeURIComponent(finalMin) + "&maxPrice=" + encodeURIComponent(finalMax) + "&page=0&size=10";
             }
@@ -901,7 +947,7 @@
             const result = await response.json();
             if (result.code === 200 && result.data && Array.isArray(result.data.content)) {
                 renderSearchDocuments(result.data.content || []);
-                showPageMessage("info", "搜索完成。");
+                notify("info", UI_TEXT.searchDone);
                 return;
             }
             throw new Error(result.msg || "搜索失败，请稍后重试。");
@@ -909,9 +955,9 @@
             if (allProducts.length) {
                 const fallback = fallbackSearchByList(mode, a, b);
                 renderSearchDocuments(fallback);
-                showPageMessage("info", "搜索服务异常，已使用本地列表匹配结果。原因：" + (error.message || "未知错误"));
+                notify("info", UI_TEXT.searchFallback + "，原因：" + (error.message || "未知错误"));
             } else {
-                showPageMessage("error", "搜索失败：" + (error.message || "未知错误"));
+                notify("error", "搜索失败：" + (error.message || "未知错误"));
             }
         } finally {
             searchButton.disabled = false;
@@ -926,13 +972,13 @@
 
         const product = allProducts.find((item) => String(item.id) === String(productId));
         if (!product) {
-            showPageMessage("error", "未找到对应商品，请先刷新列表。");
+            notify("error", UI_TEXT.productMissing);
             return;
         }
 
         const status = getProductStatus(product);
         if (status.key !== "active") {
-            showPageMessage("error", "当前商品不在可秒杀状态。");
+            notify("error", UI_TEXT.productNotActive);
             renderProducts();
             return;
         }
@@ -943,7 +989,7 @@
         }
 
         seckillInFlight = true;
-        showPageMessage("info", "正在提交秒杀请求，请稍候...");
+        notify("info", UI_TEXT.submitting);
         renderProducts();
 
         try {
@@ -954,15 +1000,23 @@
             const result = await response.json();
 
             if (result.code === 200 && result.data) {
-                showPageMessage("info", "秒杀成功，正在刷新库存和活动状态...");
+                const orderId = result.data;
+                notify("info", UI_TEXT.accepted + "（订单号：" + orderId + "）");
+                const statusResult = await pollOrderStatus(orderId);
                 await fetchProducts();
-                showPageMessage("info", "秒杀成功，商品列表已刷新。");
+                if (statusResult.status === "CREATED") {
+                    notify("info", UI_TEXT.created + "（订单号：" + orderId + "）");
+                } else if (statusResult.status === "FAILED") {
+                    notify("error", UI_TEXT.failed + "：" + (statusResult.message || "请稍后重试"));
+                } else {
+                    notify("info", statusResult.message);
+                }
                 return;
             }
 
-            showPageMessage("error", "秒杀失败：" + (result.msg || "请稍后重试。"));
+            notify("error", UI_TEXT.failed + "：" + (result.msg || "请稍后重试"));
         } catch (error) {
-            showPageMessage("error", "秒杀请求失败，请检查服务状态。");
+            notify("error", UI_TEXT.seckillRequestFailed);
             console.error("seckill request failed", error);
         } finally {
             seckillInFlight = false;

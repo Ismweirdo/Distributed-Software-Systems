@@ -8,6 +8,8 @@ import com.seckill.mapper.SeckillOrderMapper;
 import com.seckill.mapper.SeckillProductMapper;
 import com.seckill.messaging.SeckillOrderCreateMessage;
 import com.seckill.service.OrderService;
+import com.seckill.service.support.OrderProgressService;
+import com.seckill.vo.OrderQueryStatusVO;
 import com.seckill.vo.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
@@ -23,6 +25,7 @@ import java.util.List;
 public class OrderServiceImpl extends ServiceImpl<SeckillOrderMapper, SeckillOrder> implements OrderService {
 
     private final SeckillProductMapper seckillProductMapper;
+    private final OrderProgressService orderProgressService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -65,12 +68,21 @@ public class OrderServiceImpl extends ServiceImpl<SeckillOrderMapper, SeckillOrd
     }
 
     @Override
-    public Result<SeckillOrder> getByOrderId(Long orderId) {
+    public Result<OrderQueryStatusVO> queryOrderStatus(Long orderId) {
         SeckillOrder order = getById(orderId);
-        if (order == null) {
-            return Result.fail("订单不存在");
+        if (order != null) {
+            orderProgressService.clear(orderId);
+            return Result.success(OrderQueryStatusVO.created(order));
         }
-        return Result.success(order);
+
+        OrderProgressService.ProgressState progressState = orderProgressService.getState(orderId);
+        if (OrderQueryStatusVO.PENDING.equals(progressState.status())) {
+            return Result.success(OrderQueryStatusVO.pending(progressState.message()));
+        }
+        if (OrderQueryStatusVO.FAILED.equals(progressState.status())) {
+            return Result.success(OrderQueryStatusVO.failed(progressState.message()));
+        }
+        return Result.success(OrderQueryStatusVO.notFound("订单不存在或状态已过期"));
     }
 
     @Override

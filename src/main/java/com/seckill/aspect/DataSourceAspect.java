@@ -11,9 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * 根据 @DataSourceSlave 注解在读请求前切换到从库，并在结束后清理上下文。
- */
 @Slf4j
 @Aspect
 @Order(1)

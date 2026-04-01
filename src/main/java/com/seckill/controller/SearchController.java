@@ -61,6 +61,6 @@ public class SearchController {
     @PostMapping("/sync")
     public Result<String> syncAllProducts() {
         searchService.syncAllProducts();
-        return Result.success("已触发同步流程（若 Elasticsearch 未启用，将自动跳过）");
+        return Result.success("已触发同步");
     }
 }

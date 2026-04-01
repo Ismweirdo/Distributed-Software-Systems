@@ -19,11 +19,14 @@ public class OrderCreateProducer {
     @Value("${seckill.kafka.topics.order-create}")
     private String orderCreateTopic;
 
+    @Value("${seckill.kafka.send-timeout-ms:1500}")
+    private long sendTimeoutMs;
+
     public boolean send(SeckillOrderCreateMessage message) {
         try {
             SendResult<String, SeckillOrderCreateMessage> result = kafkaTemplate
                     .send(orderCreateTopic, String.valueOf(message.getOrderId()), message)
-                    .get(3, TimeUnit.SECONDS);
+                    .get(sendTimeoutMs, TimeUnit.MILLISECONDS);
             log.info("发送下单消息成功: orderId={}, topic={}, partition={}, offset={}",
                     message.getOrderId(),
                     result.getRecordMetadata().topic(),

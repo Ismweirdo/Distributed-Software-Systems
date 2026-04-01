@@ -7,7 +7,9 @@ import com.seckill.mapper.SeckillProductMapper;
 import com.seckill.messaging.OrderCreateProducer;
 import com.seckill.messaging.SeckillOrderCreateMessage;
 import com.seckill.service.CacheService;
+import com.seckill.service.OrderService;
 import com.seckill.service.SeckillProductService;
+import com.seckill.service.support.OrderProgressService;
 import com.seckill.service.support.SeckillReservationService;
 import com.seckill.util.SnowflakeIdGenerator;
 import com.seckill.vo.Result;
@@ -31,6 +33,8 @@ public class SeckillProductServiceImpl extends ServiceImpl<SeckillProductMapper,
     private final SeckillReservationService seckillReservationService;
     private final OrderCreateProducer orderCreateProducer;
     private final SnowflakeIdGenerator snowflakeIdGenerator;
+    private final OrderService orderService;
+    private final OrderProgressService orderProgressService;
 
     @Override
     @DataSourceSlave
@@ -77,7 +81,7 @@ public class SeckillProductServiceImpl extends ServiceImpl<SeckillProductMapper,
         }
         if (reserveResult == SeckillReservationService.ReserveResult.STOCK_NOT_INITIALIZED
                 || reserveResult == SeckillReservationService.ReserveResult.ERROR) {
-            return Result.fail("系统繁忙，请稍后重试");
+            return Result.fail("系统繁忙，请重试");
         }
 
         Long orderId = snowflakeIdGenerator.nextId();
@@ -87,15 +91,39 @@ public class SeckillProductServiceImpl extends ServiceImpl<SeckillProductMapper,
         message.setUserId(userId);
         message.setProductId(productId);
         message.setCreateTime(LocalDateTime.now());
+        orderProgressService.markPending(orderId);
 
         boolean sent = orderCreateProducer.send(message);
         if (!sent) {
-            seckillReservationService.release(productId, userId);
-            return Result.fail("下单请求提交失败，请重试");
+            log.warn("Kafka发送失败，触发同步降级下单: orderId={}, userId={}, productId={}", orderId, userId, productId);
+            OrderService.OrderCreateResult syncResult = orderService.createOrderFromMessage(message);
+            if (syncResult != OrderService.OrderCreateResult.SUCCESS) {
+                return handleSyncFallbackFailure(syncResult, productId, userId, orderId);
+            }
+            return finalizeOrderSuccess(productId, orderId, true);
         }
 
-        cacheService.deleteProductCache(productId);
         log.info("秒杀请求已入队: orderId={}, userId={}, productId={}", orderId, userId, productId);
+        return finalizeOrderSuccess(productId, orderId, false);
+    }
+
+    private Result<Long> handleSyncFallbackFailure(OrderService.OrderCreateResult syncResult,
+                                                   Long productId,
+                                                   Long userId,
+                                                   Long orderId) {
+        if (syncResult == OrderService.OrderCreateResult.SOLD_OUT
+                || syncResult == OrderService.OrderCreateResult.PRODUCT_NOT_FOUND) {
+            seckillReservationService.release(productId, userId);
+        }
+        orderProgressService.markFailed(orderId, "下单失败，请重试");
+        return Result.fail("下单失败，请重试");
+    }
+
+    private Result<Long> finalizeOrderSuccess(Long productId, Long orderId, boolean clearProgress) {
+        if (clearProgress) {
+            orderProgressService.clear(orderId);
+        }
+        cacheService.deleteProductCache(productId);
         return Result.success(orderId);
     }
 

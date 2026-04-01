@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(this::formatFieldError)
                 .collect(Collectors.joining("; "));
-        return Result.fail(message.isBlank() ? "请求参数校验失败" : message);
+        return Result.fail(message.isBlank() ? "参数校验失败" : message);
     }
 
     @ExceptionHandler(BindException.class)
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(this::formatFieldError)
                 .collect(Collectors.joining("; "));
-        return Result.fail(message.isBlank() ? "请求参数绑定失败" : message);
+        return Result.fail(message.isBlank() ? "参数绑定失败" : message);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -43,18 +43,18 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining("; "));
-        return Result.fail(message.isBlank() ? "请求参数不合法" : message);
+        return Result.fail(message.isBlank() ? "参数不合法" : message);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
-        return Result.fail("请求体格式错误，请检查 JSON 字段类型和结构");
+        return Result.fail("请求体格式错误");
     }
 
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception exception) {
         log.error("服务发生未处理异常", exception);
-        return Result.fail("服务内部异常，请稍后重试");
+        return Result.fail("服务异常，请重试");
     }
 
     private String formatFieldError(FieldError fieldError) {

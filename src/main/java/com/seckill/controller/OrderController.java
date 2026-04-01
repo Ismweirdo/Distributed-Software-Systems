@@ -2,6 +2,7 @@ package com.seckill.controller;
 
 import com.seckill.entity.SeckillOrder;
 import com.seckill.service.OrderService;
+import com.seckill.vo.OrderQueryStatusVO;
 import com.seckill.vo.Result;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -24,8 +25,8 @@ public class OrderController {
     private final OrderService orderService;
 
     @GetMapping("/{orderId}")
-    public Result<SeckillOrder> getByOrderId(@PathVariable @NotNull @Min(1) Long orderId) {
-        return orderService.getByOrderId(orderId);
+    public Result<OrderQueryStatusVO> getByOrderId(@PathVariable @NotNull @Min(1) Long orderId) {
+        return orderService.queryOrderStatus(orderId);
     }
 
     @GetMapping("/user")
@@ -33,4 +34,3 @@ public class OrderController {
         return orderService.listByUserId(userId);
     }
 }
-
