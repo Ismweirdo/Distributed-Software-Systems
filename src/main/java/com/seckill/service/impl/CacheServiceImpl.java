@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.UUID;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import java.util.Collections;
 
 @Slf4j
 @Service
@@ -34,7 +36,7 @@ public class CacheServiceImpl implements CacheService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final SeckillProductMapper productMapper;
 
-    private final ReentrantLock lock = new ReentrantLock();
+    // 使用 Redis 分布式锁，避免单机 ReentrantLock 无法跨实例生效
 
     @Override
     public SeckillProductVO getProductFromCache(Long productId) {
@@ -48,7 +50,16 @@ public class CacheServiceImpl implements CacheService {
             return unwrapCacheValue(cachedValue, productId);
         }
 
-        if (!lock.tryLock()) {
+        // 布隆过滤器判断（如果确定不存在，避免穿透到 DB）
+        if (!mightExistInBloomFilter(productId)) {
+            log.info("布隆过滤器判定不存在: productId={}", productId);
+            return null;
+        }
+
+        String lockKey = cacheKey + ":lock";
+        String lockVal = UUID.randomUUID().toString();
+        boolean locked = tryAcquireLock(lockKey, lockVal, 5000);
+        if (!locked) {
             return readCacheAfterRetry(cacheKey, productId);
         }
 
@@ -57,8 +68,7 @@ public class CacheServiceImpl implements CacheService {
             if (latestCachedValue != null) {
                 return unwrapCacheValue(latestCachedValue, productId);
             }
-
-            SeckillProduct product = productMapper.selectById(productId);
+            SeckillProduct product = productMapper.selectById(productId);
             if (product == null) {
                 cacheNullValue(cacheKey);
                 log.info("缓存空值写入成功: productId={}", productId);
@@ -70,7 +80,9 @@ public class CacheServiceImpl implements CacheService {
             addToBloomFilter(productId);
             return productVO;
         } finally {
-            lock.unlock();
+            if (locked) {
+                releaseLock(lockKey, lockVal);
+            }
         }
     }
 
@@ -102,7 +114,12 @@ public class CacheServiceImpl implements CacheService {
         if (productId == null || productId <= 0) {
             return;
         }
-        redisTemplate.opsForValue().setBit(BLOOM_FILTER_KEY, bloomOffset(productId), true);
+        try {
+            redisTemplate.opsForValue().setBit(BLOOM_FILTER_KEY, bloomOffset(productId), true);
+        } catch (Exception e) {
+            // If Redis is unavailable during startup or tests, log and continue — Bloom filter is an optimization.
+            log.warn("无法连接到Redis，正在跳过将商品加入布隆过滤器: productId={},原因={}", productId, e.getMessage());
+        }
     }
 
     private SeckillProductVO readCacheAfterRetry(String cacheKey, Long productId) {
@@ -155,4 +172,21 @@ public class CacheServiceImpl implements CacheService {
     private long bloomOffset(Long productId) {
         return Math.floorMod(productId, BLOOM_FILTER_BUCKET_SIZE);
     }
+
+    /* ---------- Redis 分布式锁相关方法 ---------- */
+    private boolean tryAcquireLock(String lockKey, String lockVal, long expireMillis) {
+        Boolean success = redisTemplate.opsForValue().setIfAbsent(lockKey, lockVal, expireMillis, TimeUnit.MILLISECONDS);
+        return Boolean.TRUE.equals(success);
+    }
+
+    private void releaseLock(String lockKey, String lockVal) {
+        String lua = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(lua, Long.class);
+        try {
+            redisTemplate.execute(redisScript, Collections.singletonList(lockKey), lockVal);
+        } catch (Exception e) {
+            log.warn("释放分布式锁失败: {}", lockKey, e);
+        }
+    }
 }
+

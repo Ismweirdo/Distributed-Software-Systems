@@ -12,6 +12,11 @@ spring:
     elasticsearch:
       repositories:
         enabled: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/init_user.sql,classpath:db/init_seckill_product.sql
+      data-locations: classpath:db/init_seckill_product_data.sql
 
   main:
     allow-circular-references: true

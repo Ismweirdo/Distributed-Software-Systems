@@ -12,9 +12,9 @@
 ## 当前代码状态
 - 默认启动端口是 `8083`（`src/main/resources/application.yml`）。
 - `instance1`/`instance2` profile 分别使用 `8081` 和 `8082`。
-- Elasticsearch 默认关闭：`elasticsearch.enabled=false`。
-- 读写分离注解与切面已实现（`@DataSourceSlave` + `DataSourceAspect`），但默认配置文件里没有 `spring.datasource.dynamic.*` 的主从数据源定义，需要手动补齐后才会真正按主从路由。
-- 初始化 SQL 仅包含 `seckill_product` 表，`user` 表需要手动创建（下方已给 SQL）。
+- Elasticsearch 默认开启：`elasticsearch.enabled=true`（若 ES 不可用，搜索服务会按当前代码逻辑自动降级为可用状态）。
+- 读写分离注解与切面已实现（`@DataSourceSlave` + `DataSourceAspect`），并已在 `application.yml` 配置 `master + slave_1 + slave_2` 动态数据源。
+- `user` 与 `seckill_product` 已纳入自动初始化，支持首次启动自动建表与商品导入。
 
 ## 技术栈
 - Java 17
@@ -35,28 +35,18 @@
 - 可选：Elasticsearch 7.x+
 
 ### 2. 初始化数据库
-先创建数据库并导入商品表：
+先创建数据库（表结构和商品测试数据会在应用启动时自动初始化）：
 
 ```sql
 CREATE DATABASE IF NOT EXISTS seckill_db DEFAULT CHARSET utf8mb4;
 USE seckill_db;
-SOURCE D:/CreatorProject/seckill-system/src/main/resources/db/init_seckill_product.sql;
+-- 仅需创建数据库本身，后续由应用自动初始化表和基础数据
 ```
 
-再手动创建用户表（当前仓库未提供该表的 init 脚本）：
-
-```sql
-CREATE TABLE IF NOT EXISTS `user` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT,
-  `username` VARCHAR(64) NOT NULL,
-  `password` VARCHAR(128) NOT NULL,
-  `phone` VARCHAR(20) DEFAULT NULL,
-  `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
+应用启动时会自动执行：
+- `src/main/resources/db/init_user.sql`（自动建 `user` 表）
+- `src/main/resources/db/init_seckill_product.sql`（自动建 `seckill_product` 表）
+- `src/main/resources/db/init_seckill_product_data.sql`（仅在 `seckill_product` 为空时导入测试商品）
 
 ### 3. 启动 Redis
 示例：
@@ -88,14 +78,23 @@ java -jar target/seckill-system-0.0.1-SNAPSHOT.jar --spring.profiles.active=inst
 - 按本机路径修改 `root D:/CreatorProject/seckill-system/src/main/resources/static;`
 - 访问：`http://localhost/index.html`
 
-### 6. Docker Compose（可选）
-`docker-compose.yml` 可直接拉起 MySQL/Redis/后端容器：
+### 6. Docker Compose（推荐）
+`docker-compose.yml` 可直接拉起 MySQL 主从 + Redis + Elasticsearch + 后端容器，并自动执行主从复制初始化：
 
 ```bash
 docker-compose up -d
 ```
 
-注意：Compose 将 MySQL 映射为主机 `3307`，若你在主机直接运行后端，请同步修改 `spring.datasource.url` 端口为 `3307`。
+端口映射说明：
+- MySQL 主库：`3307`
+- MySQL 从库 1：`3308`
+- MySQL 从库 2：`3309`
+- Elasticsearch：`9200`
+
+读写分离说明：
+- 主库承担写流量（`master`）
+- 从库承担读流量（`slave_1`、`slave_2`，随机路由）
+- Compose 启动时会执行 `mysql-replication-init` 一次性任务，完成 `CHANGE REPLICATION SOURCE TO ...` 配置
 
 ## API 说明
 
@@ -140,32 +139,67 @@ curl -X POST http://localhost:8083/api/products/seckill/1
 - `GET /api/search/price?minPrice=1000&maxPrice=5000&page=0&size=10`
 - `POST /api/search/sync`
 
-说明：默认 Elasticsearch 关闭，搜索接口会返回空分页结果，`/sync` 会直接跳过实际同步。
+说明：默认已启用 Elasticsearch。若 ES 暂不可用，搜索服务会按代码中的降级路径执行，不会导致应用启动失败。
 
-## 启用 Elasticsearch（可选）
+### 健康检查接口
+- `GET /api/health/init-status`
 
-### 1. 修改配置
-在 `application.yml`（或自定义 profile）中启用：
+用于快速确认本次启动是否触发了商品首次导入，返回字段包括：
+- `seededThisStartup`：本次启动是否执行了首次导入
+- `productCount`：当前商品总数
+- `latestSeedAudit`：最近一次导入审计记录（含时间和是否导入）
+
+## Elasticsearch 使用说明
+
+### 1. 配置项
+默认配置（`application.yml`）：
 
 ```yaml
 elasticsearch:
-  enabled: true
+  enabled: ${ELASTICSEARCH_ENABLED:true}
 
 spring:
   data:
     elasticsearch:
       repositories:
-        enabled: true
-      uris: http://127.0.0.1:9200
+        enabled: ${elasticsearch.enabled:false}
+      uris: ${SPRING_DATA_ELASTICSEARCH_URIS:http://127.0.0.1:9200}
 ```
 
-### 2. 启动 ES 并安装 IK（如需中文分词）
+### 2. 启动 ES（可按需安装 IK）
 
 ### 3. 触发同步
 
 ```bash
 curl -X POST http://localhost:8083/api/search/sync
 ```
+
+## MySQL 读写分离验证
+
+### 1. 准备主从库
+项目默认读取如下变量：
+
+- `SPRING_DATASOURCE_MASTER_URL`（默认 `3307`）
+- `SPRING_DATASOURCE_SLAVE1_URL`（默认 `3308`）
+- `SPRING_DATASOURCE_SLAVE2_URL`（默认 `3309`）
+
+建议直接使用 `docker-compose.yml` 启动主从容器，主机侧映射为 `3307/3308/3309`，且会自动配置复制链路。
+
+### 2. 代码验证
+读取操作已标注 `@DataSourceSlave`（例如 `SeckillProductServiceImpl#listProducts/getProductById`），写操作默认走主库。可直接运行：
+
+```bash
+mvn test -Dtest=ReadWriteSeparationTest
+```
+
+你也可以通过 MySQL 命令手工检查复制状态（容器内）：
+
+```bash
+docker exec seckill-mysql-slave1 mysql -uroot -p123456 -e "SHOW REPLICA STATUS\G"
+docker exec seckill-mysql-slave2 mysql -uroot -p123456 -e "SHOW REPLICA STATUS\G"
+```
+
+关注字段 `Replica_IO_Running: Yes` 与 `Replica_SQL_Running: Yes`。
 
 ## 测试
 
@@ -179,6 +213,7 @@ mvn test -Dtest=SearchServiceTest
 - [分布式功能部署指南](docs/分布式功能部署指南.md)
 - [分布式功能实现总结](docs/分布式功能实现总结.md)
 - [JMeter 测试指南](docs/JMeter%20测试指南.md)
+- [优化说明与启动流程](docs/优化说明与启动流程.md)
 
 ## 前端页面
 静态页面位于 `src/main/resources/static`：

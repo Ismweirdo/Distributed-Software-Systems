@@ -3,10 +3,12 @@ package com.seckill.controller;
 import com.seckill.document.SeckillProductDocument;
 import com.seckill.service.SearchService;
 import com.seckill.vo.Result;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/search")
 @Validated
 @RequiredArgsConstructor
+@Slf4j
 public class SearchController {
 
     private final SearchService searchService;
@@ -42,12 +45,15 @@ public class SearchController {
 
     @GetMapping("/price")
     public Result<Page<SeckillProductDocument>> searchByPrice(
-            @RequestParam @NotNull Double minPrice,
-            @RequestParam @NotNull Double maxPrice,
+            @RequestParam @NotNull @DecimalMin(value = "0.0", message = "最小价格不能小于 0") Double minPrice,
+            @RequestParam @NotNull @DecimalMin(value = "0.0", message = "最大价格不能小于 0") Double maxPrice,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
         if (minPrice > maxPrice) {
-            return Result.fail("最小价格不能大于最大价格");
+            log.info("收到反向价格区间，自动交换 minPrice={} maxPrice={}", minPrice, maxPrice);
+            double tmp = minPrice;
+            minPrice = maxPrice;
+            maxPrice = tmp;
         }
         return Result.success(searchService.searchByPriceRange(minPrice, maxPrice, page, size));
     }
@@ -55,6 +61,6 @@ public class SearchController {
     @PostMapping("/sync")
     public Result<String> syncAllProducts() {
         searchService.syncAllProducts();
-        return Result.success("商品数据已同步到 Elasticsearch");
+        return Result.success("已触发同步流程（若 Elasticsearch 未启用，将自动跳过）");
     }
 }

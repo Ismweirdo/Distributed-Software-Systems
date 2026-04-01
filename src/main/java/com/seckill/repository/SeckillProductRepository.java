@@ -26,20 +26,17 @@ public interface SeckillProductRepository extends ElasticsearchRepository<Seckil
     Page<SeckillProductDocument> findByDescriptionContaining(String description, Pageable pageable);
 
     /**
-     * 自定义查询 - 多字段匹配搜索
+     * 多字段匹配搜索（衍生查询）
      */
-    @Query("{\"bool\": {\"should\": [{\"match\": {\"productName\": ?0}}, {\"match\": {\"description\": ?0}}]}}")
-    Page<SeckillProductDocument> searchByKeyword(String keyword, Pageable pageable);
+    Page<SeckillProductDocument> findByProductNameContainingOrDescriptionContaining(String name, String description, Pageable pageable);
 
     /**
-     * 查询指定价格区间的商品
+     * 查询指定价格区间的商品（衍生查询）
      */
-    @Query("{\"range\": {\"seckillPrice\": {\"gte\": ?0, \"lte\": ?1}}}")
-    Page<SeckillProductDocument> findByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
+    Page<SeckillProductDocument> findBySeckillPriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 
     /**
-     * 查询有库存的商品
+     * 查询有库存的商品（衍生查询）
      */
-    @Query("{\"range\": {\"stock\": {\"gt\": 0}}}")
-    Page<SeckillProductDocument> findInStockProducts(Pageable pageable);
+    Page<SeckillProductDocument> findByStockGreaterThan(Integer stock, Pageable pageable);
 }

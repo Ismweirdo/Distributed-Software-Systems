@@ -1,8 +1,8 @@
 services:
-  # MySQL 数据库（使用 DaoCloud 镜像源）
-  mysql:
+  # MySQL 主库
+  mysql-master:
     image: docker.m.daocloud.io/library/mysql:8.0
-    container_name: seckill-mysql
+    container_name: seckill-mysql-master
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: seckill_db
@@ -10,7 +10,76 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - mysql-master-data:/var/lib/mysql
+    command:
+      - --server-id=1
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --default-authentication-plugin=mysql_native_password
+    restart: always
+    networks:
+      - seckill-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL 从库 1
+  mysql-slave1:
+    image: docker.m.daocloud.io/library/mysql:8.0
+    container_name: seckill-mysql-slave1
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: seckill_db
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-slave1-data:/var/lib/mysql
+    command:
+      - --server-id=2
+      - --read-only=ON
+      - --relay-log=relay-bin
+      - --skip-slave-start=ON
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --log-bin=mysql-bin
+      - --log-replica-updates=ON
+      - --default-authentication-plugin=mysql_native_password
+    restart: always
+    networks:
+      - seckill-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL 从库 2
+  mysql-slave2:
+    image: docker.m.daocloud.io/library/mysql:8.0
+    container_name: seckill-mysql-slave2
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: seckill_db
+      MYSQL_INITDB_SKIP_TZINFO: 1
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-slave2-data:/var/lib/mysql
+    command:
+      - --server-id=3
+      - --read-only=ON
+      - --relay-log=relay-bin
+      - --skip-slave-start=ON
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --log-bin=mysql-bin
+      - --log-replica-updates=ON
+      - --default-authentication-plugin=mysql_native_password
     restart: always
     networks:
       - seckill-network
@@ -38,6 +107,81 @@ services:
       timeout: 5s
       retries: 5
 
+  # Elasticsearch
+  seckill-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    container_name: seckill-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    restart: always
+    networks:
+      - seckill-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS http://localhost:9200/_cluster/health | grep -q '\"status\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # 初始化 MySQL 主从复制（一次性任务）
+  mysql-replication-init:
+    image: docker.m.daocloud.io/library/mysql:8.0
+    container_name: seckill-mysql-replication-init
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+      mysql-slave1:
+        condition: service_healthy
+      mysql-slave2:
+        condition: service_healthy
+    command: >
+      sh -c "
+      set -e;
+      echo 'Waiting MySQL instances...';
+      until mysql -hmysql-master -uroot -p123456 -e 'SELECT 1' >/dev/null 2>&1; do sleep 2; done;
+      until mysql -hmysql-slave1 -uroot -p123456 -e 'SELECT 1' >/dev/null 2>&1; do sleep 2; done;
+      until mysql -hmysql-slave2 -uroot -p123456 -e 'SELECT 1' >/dev/null 2>&1; do sleep 2; done;
+
+      echo 'Creating replication account on master...';
+      mysql -hmysql-master -uroot -p123456 -e \"
+      CREATE USER IF NOT EXISTS 'replica'@'%' IDENTIFIED WITH mysql_native_password BY 'replica123';
+      GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'replica'@'%';
+      FLUSH PRIVILEGES;
+      \";
+
+      MASTER_STATUS=$$(mysql -hmysql-master -uroot -p123456 -Nse \"SHOW MASTER STATUS\" | awk '{print $$1\":\"$$2}');
+      MASTER_LOG_FILE=$$(echo $$MASTER_STATUS | cut -d: -f1);
+      MASTER_LOG_POS=$$(echo $$MASTER_STATUS | cut -d: -f2);
+      echo \"Master status: file=$$MASTER_LOG_FILE pos=$$MASTER_LOG_POS\";
+
+      echo 'Configuring slave1...';
+      mysql -hmysql-slave1 -uroot -p123456 -e \"
+      STOP REPLICA;
+      CHANGE REPLICATION SOURCE TO SOURCE_HOST='mysql-master', SOURCE_PORT=3306, SOURCE_USER='replica', SOURCE_PASSWORD='replica123', SOURCE_LOG_FILE='$$MASTER_LOG_FILE', SOURCE_LOG_POS=$$MASTER_LOG_POS, SOURCE_CONNECT_RETRY=3, GET_SOURCE_PUBLIC_KEY=1;
+      START REPLICA;
+      \";
+
+      echo 'Configuring slave2...';
+      mysql -hmysql-slave2 -uroot -p123456 -e \"
+      STOP REPLICA;
+      CHANGE REPLICATION SOURCE TO SOURCE_HOST='mysql-master', SOURCE_PORT=3306, SOURCE_USER='replica', SOURCE_PASSWORD='replica123', SOURCE_LOG_FILE='$$MASTER_LOG_FILE', SOURCE_LOG_POS=$$MASTER_LOG_POS, SOURCE_CONNECT_RETRY=3, GET_SOURCE_PUBLIC_KEY=1;
+      START REPLICA;
+      \";
+
+      echo 'Replication status slave1:';
+      mysql -hmysql-slave1 -uroot -p123456 -e \"SHOW REPLICA STATUS\\G\" | grep -E 'Replica_IO_Running:|Replica_SQL_Running:';
+      echo 'Replication status slave2:';
+      mysql -hmysql-slave2 -uroot -p123456 -e \"SHOW REPLICA STATUS\\G\" | grep -E 'Replica_IO_Running:|Replica_SQL_Running:';
+      echo 'Replication setup complete.';
+      "
+    restart: "no"
+    networks:
+      - seckill-network
+
   # 后端服务
   seckill-service:
     build: .
@@ -45,23 +189,42 @@ services:
     ports:
       - "8084:8083"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/seckill_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATASOURCE_MASTER_URL: jdbc:mysql://mysql-master:3306/seckill_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_MASTER_USERNAME: root
+      SPRING_DATASOURCE_MASTER_PASSWORD: 123456
+      SPRING_DATASOURCE_SLAVE1_URL: jdbc:mysql://mysql-slave1:3306/seckill_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_SLAVE1_USERNAME: root
+      SPRING_DATASOURCE_SLAVE1_PASSWORD: 123456
+      SPRING_DATASOURCE_SLAVE2_URL: jdbc:mysql://mysql-slave2:3306/seckill_db?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_SLAVE2_USERNAME: root
+      SPRING_DATASOURCE_SLAVE2_PASSWORD: 123456
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      ELASTICSEARCH_ENABLED: "true"
+      SPRING_ELASTICSEARCH_URIS: http://seckill-elasticsearch:9200
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
+      mysql-slave1:
+        condition: service_healthy
+      mysql-slave2:
+        condition: service_healthy
+      mysql-replication-init:
+        condition: service_completed_successfully
       redis:
+        condition: service_healthy
+      seckill-elasticsearch:
         condition: service_healthy
     restart: always
     networks:
       - seckill-network
 
 volumes:
-  mysql-data:
+  mysql-master-data:
+  mysql-slave1-data:
+  mysql-slave2-data:
   redis-data:
+  es-data:
 
 networks:
   seckill-network:

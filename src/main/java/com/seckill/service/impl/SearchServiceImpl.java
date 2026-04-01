@@ -15,9 +15,11 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Service
@@ -71,32 +73,64 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public Page<SeckillProductDocument> searchByKeyword(String keyword, int page, int size) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
         if (elasticsearchUnavailable("searchByKeyword")) {
-            return emptyPage(page, size);
+            return searchKeywordFromDb(normalizedKeyword, page, size);
         }
         Pageable pageable = PageRequest.of(page, size);
-        log.info("ES 关键字搜索: {}, page={}, size={}", keyword, page, size);
-        return repository.searchByKeyword(keyword, pageable);
+        log.info("ES 关键字搜索: {}, page={}, size={}", normalizedKeyword, page, size);
+        try {
+            Page<SeckillProductDocument> esResult = repository.findByProductNameContainingOrDescriptionContaining(normalizedKeyword, normalizedKeyword, pageable);
+            if (esResult.hasContent()) {
+                return esResult;
+            }
+            log.info("ES 关键字搜索结果为空，回退 DB 搜索: keyword={}, page={}, size={}", normalizedKeyword, page, size);
+            return searchKeywordFromDb(normalizedKeyword, page, size);
+        } catch (Exception e) {
+            log.warn("ES 查询失败，使用内存回退：{}", e.getMessage());
+            return searchKeywordFromDb(normalizedKeyword, page, size);
+        }
     }
 
     @Override
     public Page<SeckillProductDocument> searchByName(String name, int page, int size) {
+        String normalizedName = name == null ? "" : name.trim();
         if (elasticsearchUnavailable("searchByName")) {
-            return emptyPage(page, size);
+            return searchNameFromDb(normalizedName, page, size);
         }
         Pageable pageable = PageRequest.of(page, size);
-        log.info("ES 商品名称搜索: {}, page={}, size={}", name, page, size);
-        return repository.findByProductNameContaining(name, pageable);
+        log.info("ES 商品名称搜索: {}, page={}, size={}", normalizedName, page, size);
+        try {
+            Page<SeckillProductDocument> esResult = repository.findByProductNameContaining(normalizedName, pageable);
+            if (esResult.hasContent()) {
+                return esResult;
+            }
+            log.info("ES 名称搜索结果为空，回退 DB 搜索: name={}, page={}, size={}", normalizedName, page, size);
+            return searchNameFromDb(normalizedName, page, size);
+        } catch (Exception e) {
+            log.warn("ES 名称查询失败，使用内存回退：{}", e.getMessage());
+            return searchNameFromDb(normalizedName, page, size);
+        }
     }
 
     @Override
     public Page<SeckillProductDocument> searchByPriceRange(Double minPrice, Double maxPrice, int page, int size) {
         if (elasticsearchUnavailable("searchByPriceRange")) {
-            return emptyPage(page, size);
+            return searchPriceRangeFromDb(minPrice, maxPrice, page, size);
         }
         Pageable pageable = PageRequest.of(page, size);
         log.info("ES 价格区间搜索: {}-{}, page={}, size={}", minPrice, maxPrice, page, size);
-        return repository.findByPriceRange(BigDecimal.valueOf(minPrice), BigDecimal.valueOf(maxPrice), pageable);
+        try {
+            Page<SeckillProductDocument> esResult = repository.findBySeckillPriceBetween(BigDecimal.valueOf(minPrice), BigDecimal.valueOf(maxPrice), pageable);
+            if (esResult.hasContent()) {
+                return esResult;
+            }
+            log.info("ES 价格区间搜索结果为空，回退 DB 搜索: min={}, max={}, page={}, size={}", minPrice, maxPrice, page, size);
+            return searchPriceRangeFromDb(minPrice, maxPrice, page, size);
+        } catch (Exception e) {
+            log.warn("ES 价格区间查询失败，使用内存回退：{}", e.getMessage());
+            return searchPriceRangeFromDb(minPrice, maxPrice, page, size);
+        }
     }
 
     @Override
@@ -128,8 +162,9 @@ public class SearchServiceImpl implements SearchService {
         document.setOriginalPrice(product.getOriginalPrice());
         document.setSeckillPrice(product.getSeckillPrice());
         document.setStock(product.getStock());
-        document.setStartTime(product.getStartTime());
-        document.setEndTime(product.getEndTime());
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        document.setStartTime(product.getStartTime() == null ? null : product.getStartTime().format(fmt));
+        document.setEndTime(product.getEndTime() == null ? null : product.getEndTime().format(fmt));
         document.setStatus(resolveStatus(product.getStartTime(), product.getEndTime()));
         return document;
     }
@@ -152,6 +187,61 @@ public class SearchServiceImpl implements SearchService {
     private Page<SeckillProductDocument> emptyPage(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return new PageImpl<>(Collections.emptyList(), pageable, 0);
+    }
+
+    private Page<SeckillProductDocument> searchKeywordFromDb(String keyword, int page, int size) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        List<SeckillProductDocument> docs = productMapper.selectList(null)
+                .stream()
+                .map(this::convertToDocument)
+                .filter(d -> containsIgnoreCase(d.getProductName(), normalizedKeyword)
+                        || containsIgnoreCase(d.getDescription(), normalizedKeyword))
+                .toList();
+        return toPage(docs, page, size);
+    }
+
+    private Page<SeckillProductDocument> searchNameFromDb(String name, int page, int size) {
+        String normalizedName = name == null ? "" : name.trim();
+        List<SeckillProductDocument> docs = productMapper.selectList(null)
+                .stream()
+                .map(this::convertToDocument)
+                .filter(d -> containsIgnoreCase(d.getProductName(), normalizedName))
+                .toList();
+        return toPage(docs, page, size);
+    }
+
+    private Page<SeckillProductDocument> searchPriceRangeFromDb(Double minPrice, Double maxPrice, int page, int size) {
+        BigDecimal min = BigDecimal.valueOf(minPrice);
+        BigDecimal max = BigDecimal.valueOf(maxPrice);
+        List<SeckillProductDocument> docs = productMapper.selectList(null)
+                .stream()
+                .map(this::convertToDocument)
+                .filter(d -> {
+                    BigDecimal price = d.getSeckillPrice();
+                    return price != null && price.compareTo(min) >= 0 && price.compareTo(max) <= 0;
+                })
+                .toList();
+        return toPage(docs, page, size);
+    }
+
+    private boolean containsIgnoreCase(String source, String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return true;
+        }
+        if (source == null || source.isBlank()) {
+            return false;
+        }
+        return source.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
+    }
+
+    private Page<SeckillProductDocument> toPage(List<SeckillProductDocument> docs, int page, int size) {
+        if (docs.isEmpty()) {
+            return emptyPage(page, size);
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        int start = Math.min((int) pageable.getOffset(), docs.size());
+        int end = Math.min(start + pageable.getPageSize(), docs.size());
+        return new PageImpl<>(docs.subList(start, end), pageable, docs.size());
     }
 
     private boolean elasticsearchUnavailable(String operation) {

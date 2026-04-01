@@ -6,19 +6,18 @@
     <title>秒杀商城 - 商品列表</title>
     <style>
         :root {
-            --bg: #071621;
-            --panel: rgba(8, 22, 34, 0.82);
-            --panel-strong: rgba(11, 27, 40, 0.96);
-            --border: rgba(173, 214, 255, 0.13);
-            --text: #eef7ff;
-            --muted: #98aec1;
-            --primary: #ff7a59;
-            --secondary: #4bd3c7;
-            --success: #3ed29b;
-            --warning: #f4c95d;
-            --danger: #ff6b6b;
-            --radius: 26px;
-            --shadow: 0 24px 60px rgba(4, 11, 20, 0.44);
+            --bg: #f3f6fb;
+            --card: #ffffff;
+            --line: #e3e8f1;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --radius: 14px;
+            --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
         }
 
         * {
@@ -30,25 +29,20 @@
             min-height: 100vh;
             font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
             color: var(--text);
-            background:
-                radial-gradient(circle at 10% 10%, rgba(255, 122, 89, 0.18), transparent 20%),
-                radial-gradient(circle at 100% 0%, rgba(75, 211, 199, 0.16), transparent 28%),
-                linear-gradient(145deg, #05111b 0%, #0b2537 55%, #0f3550 100%);
+            background: var(--bg);
         }
 
         .page {
-            width: min(1280px, calc(100% - 32px));
+            width: min(1120px, calc(100% - 32px));
             margin: 0 auto;
-            padding: 24px 0 36px;
+            padding: 24px 0 32px;
         }
 
         .hero {
-            padding: 28px;
+            padding: 18px;
             border-radius: var(--radius);
-            border: 1px solid var(--border);
-            background:
-                linear-gradient(135deg, rgba(255, 122, 89, 0.12), rgba(75, 211, 199, 0.08)),
-                var(--panel-strong);
+            border: 1px solid var(--line);
+            background: var(--card);
             box-shadow: var(--shadow);
         }
 
@@ -56,26 +50,27 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 18px;
-            margin-bottom: 20px;
+            gap: 12px;
+            margin-bottom: 14px;
         }
 
         .hero h1 {
             margin: 0;
-            font-size: clamp(2rem, 4vw, 3.3rem);
-            line-height: 1.08;
+            font-size: clamp(1.6rem, 2.8vw, 2.3rem);
+            line-height: 1.2;
         }
 
         .hero p {
-            margin: 12px 0 0;
+            margin: 8px 0 0;
             color: var(--muted);
-            line-height: 1.75;
-            max-width: 48rem;
+            line-height: 1.7;
+            max-width: 46rem;
+            font-size: 14px;
         }
 
         .hero-actions {
             display: flex;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
@@ -83,98 +78,97 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 12px 18px;
-            border-radius: 16px;
+            padding: 10px 12px;
+            border-radius: 10px;
             border: 1px solid transparent;
             text-decoration: none;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.2s ease;
         }
 
         .btn-primary {
             color: #fff;
-            background: linear-gradient(135deg, var(--primary), #ff9a61);
-            box-shadow: 0 14px 30px rgba(255, 122, 89, 0.28);
+            background: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-strong);
         }
 
         .btn-secondary {
-            color: #d7ecfe;
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
+            color: #374151;
+            background: #fff;
+            border-color: #d1d5db;
         }
 
         .summary {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 14px;
+            gap: 10px;
         }
 
         .summary-card {
-            padding: 18px 20px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
         }
 
         .summary-card span {
             display: block;
             color: var(--muted);
-            font-size: 13px;
-            margin-bottom: 8px;
+            font-size: 12px;
+            margin-bottom: 6px;
         }
 
         .summary-card strong {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
         }
 
         .toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
-            margin: 22px 0 16px;
+            gap: 10px;
+            margin: 14px 0 12px;
             flex-wrap: wrap;
         }
 
         .filter-bar {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
         .filter-chip {
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.05);
-            color: #d8ecfc;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #4b5563;
             cursor: pointer;
-            transition: 0.2s ease;
+            font-size: 13px;
         }
 
         .filter-chip.active {
-            background: rgba(255, 122, 89, 0.18);
-            border-color: rgba(255, 122, 89, 0.4);
-            color: #fff;
+            background: #eaf1ff;
+            border-color: #93c5fd;
+            color: #1e40af;
         }
 
         .status-line {
             color: var(--muted);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .message {
-            margin-bottom: 16px;
-            padding: 14px 16px;
-            border-radius: 18px;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
             display: none;
             line-height: 1.6;
+            font-size: 13px;
         }
 
         .message.show {
@@ -182,63 +176,89 @@
         }
 
         .message.info {
-            background: rgba(75, 211, 199, 0.12);
-            border: 1px solid rgba(75, 211, 199, 0.26);
-            color: #caffff;
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            color: #1e3a8a;
         }
 
         .message.error {
-            background: rgba(255, 107, 107, 0.12);
-            border: 1px solid rgba(255, 107, 107, 0.25);
-            color: #ffd8d8;
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .search-panel {
+            margin: 12px 0;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: var(--card);
+            box-shadow: var(--shadow);
+        }
+
+        .search-title {
+            margin: 0 0 10px;
+            font-size: 1rem;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr auto auto;
+            gap: 8px;
+        }
+
+        .search-tip {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .search-input,
+        .search-select {
+            width: 100%;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #1f2937;
         }
 
         .products {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
         }
 
         .product-card {
-            position: relative;
-            padding: 24px;
-            border-radius: 24px;
-            background: var(--panel);
-            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--line);
             box-shadow: var(--shadow);
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            min-height: 360px;
-        }
-
-        .product-card::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 35%);
-            pointer-events: none;
+            gap: 10px;
+            min-height: 320px;
         }
 
         .card-top {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
+            gap: 8px;
             align-items: flex-start;
         }
 
         .product-name {
             margin: 0;
-            font-size: 1.35rem;
-            line-height: 1.35;
+            font-size: 1.05rem;
+            line-height: 1.4;
         }
 
         .badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 12px;
+            padding: 4px 8px;
             border-radius: 999px;
             font-size: 12px;
             font-weight: 700;
@@ -246,66 +266,68 @@
         }
 
         .badge.upcoming {
-            background: rgba(244, 201, 93, 0.14);
-            color: #ffe49c;
+            background: #fffbeb;
+            color: #92400e;
         }
 
         .badge.active {
-            background: rgba(62, 210, 155, 0.14);
-            color: #c9ffe9;
+            background: #ecfdf3;
+            color: #166534;
         }
 
         .badge.ended,
         .badge.soldout {
-            background: rgba(255, 107, 107, 0.14);
-            color: #ffd5d5;
+            background: #fef2f2;
+            color: #991b1b;
         }
 
         .description {
             margin: 0;
             color: var(--muted);
-            line-height: 1.8;
-            min-height: 72px;
+            line-height: 1.6;
+            min-height: 56px;
+            font-size: 14px;
         }
 
         .price-row {
             display: flex;
-            align-items: flex-end;
-            gap: 12px;
+            align-items: center;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
         .price-current {
-            font-size: 2rem;
+            font-size: 1.6rem;
             font-weight: 800;
-            color: #fff4dd;
+            color: #111827;
         }
 
         .price-origin {
-            color: #81a0b6;
+            color: #9ca3af;
             text-decoration: line-through;
+            font-size: 14px;
         }
 
         .discount {
-            padding: 6px 10px;
+            padding: 3px 8px;
             border-radius: 999px;
-            background: rgba(255, 122, 89, 0.14);
-            color: #ffd4c9;
-            font-size: 13px;
+            background: #eaf1ff;
+            color: #1e40af;
+            font-size: 12px;
         }
 
         .meta {
             display: grid;
-            gap: 10px;
+            gap: 6px;
         }
 
         .meta-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 14px;
-            font-size: 14px;
-            color: #d7ebfb;
+            gap: 10px;
+            font-size: 13px;
+            color: #374151;
         }
 
         .meta-row span:last-child {
@@ -314,36 +336,38 @@
         }
 
         .progress {
-            height: 10px;
+            height: 8px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
+            background: #e5e7eb;
             overflow: hidden;
         }
 
         .progress > div {
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(135deg, var(--secondary), #97fff3);
+            background: #16a34a;
         }
 
         .progress.warning > div {
-            background: linear-gradient(135deg, var(--warning), #ffd980);
+            background: var(--warning);
         }
 
         .progress.danger > div {
-            background: linear-gradient(135deg, var(--danger), #ff9f9f);
+            background: var(--danger);
         }
 
         .countdown {
-            padding: 12px 14px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #dff3ff;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            color: #374151;
             line-height: 1.6;
+            font-size: 13px;
         }
 
         .countdown strong {
-            color: #fff;
+            color: #111827;
         }
 
         .action {
@@ -352,68 +376,51 @@
 
         .seckill-btn {
             width: 100%;
-            padding: 15px 18px;
+            padding: 11px 12px;
             border: none;
-            border-radius: 18px;
-            font-size: 15px;
-            font-weight: 800;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
             color: #fff;
-            background: linear-gradient(135deg, var(--primary), #ff9a61);
-            box-shadow: 0 16px 30px rgba(255, 122, 89, 0.24);
+            background: var(--primary);
             cursor: pointer;
-            transition: 0.2s ease;
         }
 
         .seckill-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
+            background: var(--primary-strong);
         }
 
         .seckill-btn:disabled {
-            opacity: 0.58;
+            opacity: 0.6;
             cursor: not-allowed;
-            box-shadow: none;
         }
 
         .empty {
-            padding: 36px 24px;
-            border-radius: 24px;
+            padding: 20px 16px;
+            border-radius: 12px;
             text-align: center;
-            border: 1px solid var(--border);
-            background: var(--panel);
+            border: 1px solid var(--line);
+            background: var(--card);
             color: var(--muted);
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 900px) {
             .summary {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
-        @media (max-width: 720px) {
-            .page {
-                width: min(100% - 20px, 1280px);
-                padding-top: 18px;
+        @media (max-width: 700px) {
+            .summary {
+                grid-template-columns: 1fr;
             }
-
-            .hero,
-            .product-card,
-            .empty {
-                border-radius: 22px;
-            }
-
             .hero-top {
                 flex-direction: column;
             }
-
-            .hero-actions {
-                width: 100%;
-            }
-
             .btn {
                 width: 100%;
             }
-
-            .summary {
+            .search-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -464,17 +471,40 @@
         <div class="status-line" id="status-line">准备加载商品数据...</div>
     </section>
 
+    <section class="search-panel">
+        <h2 class="search-title">搜索（对接后端 `/api/search/*`）</h2>
+        <div class="search-grid">
+            <select id="search-mode" class="search-select">
+                <option value="keyword">关键词</option>
+                <option value="name">名称</option>
+                <option value="price">价格区间</option>
+            </select>
+            <input id="search-input-a" class="search-input" type="text" placeholder="关键词或名称，例如 iPhone">
+            <input id="search-input-b" class="search-input" type="text" placeholder="价格模式下填最大价格，例如 5000">
+            <button id="search-btn" class="btn btn-primary" type="button">搜索</button>
+            <button id="reset-search-btn" class="btn btn-secondary" type="button">返回全部</button>
+        </div>
+        <div id="search-mode-tip" class="search-tip">关键词模式：输入商品名称或描述片段。</div>
+    </section>
+
     <div id="page-message" class="message" role="status" aria-live="polite"></div>
     <section id="product-container" class="products"></section>
 </main>
 
 <script>
     const API_BASE = "/api/products";
+    const SEARCH_BASE = "/api/search";
     const productContainer = document.getElementById("product-container");
     const pageMessage = document.getElementById("page-message");
     const statusLine = document.getElementById("status-line");
     const refreshButton = document.getElementById("refresh-btn");
+    const searchButton = document.getElementById("search-btn");
+    const resetSearchButton = document.getElementById("reset-search-btn");
+    const searchMode = document.getElementById("search-mode");
+    const searchInputA = document.getElementById("search-input-a");
+    const searchInputB = document.getElementById("search-input-b");
     const filterButtons = Array.from(document.querySelectorAll(".filter-chip"));
+    const searchModeTip = document.getElementById("search-mode-tip");
     const summaryNodes = {
         total: document.getElementById("summary-total"),
         active: document.getElementById("summary-active"),
@@ -486,6 +516,46 @@
     let activeFilter = "all";
     let countdownTimer = null;
     let seckillInFlight = false;
+    let currentView = "list";
+
+    function updateSearchFormByMode() {
+        const mode = searchMode.value;
+        if (mode === "keyword") {
+            searchInputA.type = "text";
+            searchInputA.placeholder = "关键词，例如 iPhone 或 苹果";
+            searchInputB.value = "";
+            searchInputB.disabled = true;
+            searchInputB.placeholder = "关键词模式下无需填写";
+            searchModeTip.textContent = "关键词模式：按商品名称 + 描述匹配。";
+            return;
+        }
+
+        if (mode === "name") {
+            searchInputA.type = "text";
+            searchInputA.placeholder = "商品名称，例如 iPhone";
+            searchInputB.value = "";
+            searchInputB.disabled = true;
+            searchInputB.placeholder = "名称模式下无需填写";
+            searchModeTip.textContent = "名称模式：仅按商品名称匹配。";
+            return;
+        }
+
+        searchInputA.type = "number";
+        searchInputA.min = "0";
+        searchInputA.step = "0.01";
+        searchInputA.placeholder = "最小价格，例如 1000";
+        searchInputB.disabled = false;
+        searchInputB.type = "number";
+        searchInputB.min = "0";
+        searchInputB.step = "0.01";
+        searchInputB.placeholder = "最大价格，例如 5000";
+        searchModeTip.textContent = "价格模式：请输入最小价和最大价，若反向输入将自动纠正。";
+    }
+
+    function parsePrice(value) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
 
     function showPageMessage(type, text) {
         pageMessage.textContent = text;
@@ -697,7 +767,56 @@
         return div.innerHTML;
     }
 
+    function renderSearchDocuments(content) {
+        currentView = "search";
+        if (!Array.isArray(content) || !content.length) {
+            productContainer.innerHTML = '<div class="empty">搜索无结果，请更换关键词或条件。</div>';
+            statusLine.textContent = "搜索结果 0 条。";
+            return;
+        }
+        statusLine.textContent = "搜索结果 " + content.length + " 条。";
+        productContainer.innerHTML = content.map((doc) => `
+            <article class="product-card">
+                <div class="card-top">
+                    <h2 class="product-name">${escapeHtml(doc.productName || "未命名商品")}</h2>
+                    <span class="badge active">搜索结果</span>
+                </div>
+                <p class="description">${escapeHtml(doc.description || "暂无描述")}</p>
+                <div class="price-row">
+                    <span class="price-current">¥${formatMoney(doc.seckillPrice)}</span>
+                    <span class="price-origin">原价 ¥${formatMoney(doc.originalPrice)}</span>
+                </div>
+                <div class="meta">
+                    <div class="meta-row"><span>库存</span><span>${Number(doc.stock || 0)} 件</span></div>
+                    <div class="meta-row"><span>活动开始</span><span>${formatDateTime(doc.startTime)}</span></div>
+                </div>
+            </article>
+        `).join("");
+    }
+
+    function fallbackSearchByList(mode, a, b) {
+        const keyword = a.toLowerCase();
+        if (mode === "keyword") {
+            return allProducts.filter((p) =>
+                String(p.productName || "").toLowerCase().includes(keyword) ||
+                String(p.description || "").toLowerCase().includes(keyword)
+            );
+        }
+        if (mode === "name") {
+            return allProducts.filter((p) =>
+                String(p.productName || "").toLowerCase().includes(keyword)
+            );
+        }
+        const min = Number(a);
+        const max = Number(b);
+        return allProducts.filter((p) => {
+            const price = Number(p.seckillPrice || 0);
+            return price >= min && price <= max;
+        });
+    }
+
     function setActiveFilter(filter) {
+        currentView = "list";
         activeFilter = filter;
         filterButtons.forEach((button) => {
             button.classList.toggle("active", button.dataset.filter === filter);
@@ -706,6 +825,7 @@
     }
 
     async function fetchProducts() {
+        currentView = "list";
         refreshButton.disabled = true;
         refreshButton.textContent = "刷新中...";
         statusLine.textContent = "正在从服务端加载商品数据...";
@@ -731,6 +851,57 @@
         } finally {
             refreshButton.disabled = false;
             refreshButton.textContent = "刷新商品列表";
+        }
+    }
+
+    async function searchProducts() {
+        const mode = searchMode.value;
+        const a = searchInputA.value.trim();
+        const b = searchInputB.value.trim();
+        if (!a) {
+            showPageMessage("error", "请输入搜索条件。");
+            return;
+        }
+        searchButton.disabled = true;
+        searchButton.textContent = "搜索中...";
+        try {
+            let url = "";
+            if (mode === "keyword") {
+                url = SEARCH_BASE + "/keyword?keyword=" + encodeURIComponent(a) + "&page=0&size=10";
+            } else if (mode === "name") {
+                url = SEARCH_BASE + "/name?name=" + encodeURIComponent(a) + "&page=0&size=10";
+            } else {
+                const minPrice = parsePrice(a);
+                const maxPrice = parsePrice(b);
+                if (!b || minPrice === null || maxPrice === null) {
+                    throw new Error("价格区间模式需要填写最小价格和最大价格数字。");
+                }
+                const finalMin = Math.min(minPrice, maxPrice);
+                const finalMax = Math.max(minPrice, maxPrice);
+                if (finalMin !== minPrice || finalMax !== maxPrice) {
+                    showPageMessage("info", "检测到区间顺序相反，已自动按最小价到最大价搜索。");
+                }
+                url = SEARCH_BASE + "/price?minPrice=" + encodeURIComponent(finalMin) + "&maxPrice=" + encodeURIComponent(finalMax) + "&page=0&size=10";
+            }
+            const response = await fetch(url);
+            const result = await response.json();
+            if (result.code === 200 && result.data && Array.isArray(result.data.content)) {
+                renderSearchDocuments(result.data.content || []);
+                showPageMessage("info", "搜索完成。");
+                return;
+            }
+            throw new Error(result.msg || "搜索失败，请稍后重试。");
+        } catch (error) {
+            if (allProducts.length) {
+                const fallback = fallbackSearchByList(mode, a, b);
+                renderSearchDocuments(fallback);
+                showPageMessage("info", "搜索服务异常，已使用本地列表匹配结果。原因：" + (error.message || "未知错误"));
+            } else {
+                showPageMessage("error", "搜索失败：" + (error.message || "未知错误"));
+            }
+        } finally {
+            searchButton.disabled = false;
+            searchButton.textContent = "搜索";
         }
     }
 
@@ -789,7 +960,7 @@
             window.clearInterval(countdownTimer);
         }
         countdownTimer = window.setInterval(() => {
-            if (allProducts.length) {
+            if (currentView === "list" && allProducts.length) {
                 updateSummary(allProducts);
                 renderProducts();
             }
@@ -801,6 +972,15 @@
     });
 
     refreshButton.addEventListener("click", fetchProducts);
+    searchMode.addEventListener("change", updateSearchFormByMode);
+    searchButton.addEventListener("click", searchProducts);
+    resetSearchButton.addEventListener("click", () => {
+        searchInputA.value = "";
+        searchInputB.value = "";
+        setActiveFilter("all");
+        clearPageMessage();
+        statusLine.textContent = "已返回全部商品。";
+    });
 
     productContainer.addEventListener("click", (event) => {
         const target = event.target;
@@ -815,6 +995,7 @@
     });
 
     fetchProducts();
+    updateSearchFormByMode();
     startCountdownTicker();
 </script>
 </body>

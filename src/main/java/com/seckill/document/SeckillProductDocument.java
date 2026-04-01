@@ -7,7 +7,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+// Store times as formatted strings in ES to avoid conversion issues during tests
 
 /**
  * 商品 ES 文档实体
@@ -19,10 +19,10 @@ public class SeckillProductDocument {
     @Id
     private Long id;
 
-    @Field(type = FieldType.Text, analyzer = "ik_smart", searchAnalyzer = "ik_smart")
+    @Field(type = FieldType.Text, analyzer = "standard", searchAnalyzer = "standard")
     private String productName;
 
-    @Field(type = FieldType.Text, analyzer = "ik_smart", searchAnalyzer = "ik_smart")
+    @Field(type = FieldType.Text, analyzer = "standard", searchAnalyzer = "standard")
     private String description;
 
     @Field(type = FieldType.Double)
@@ -34,11 +34,11 @@ public class SeckillProductDocument {
     @Field(type = FieldType.Integer)
     private Integer stock;
 
-    @Field(type = FieldType.Date, pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime startTime;
+    @Field(type = FieldType.Keyword)
+    private String startTime;
 
-    @Field(type = FieldType.Date, pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime endTime;
+    @Field(type = FieldType.Keyword)
+    private String endTime;
 
     @Field(type = FieldType.Keyword)
     private String status; // 秒杀状态：UPCOMING(即将开始), ONGOING(进行中), ENDED(已结束)
