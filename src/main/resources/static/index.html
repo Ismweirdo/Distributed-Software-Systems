@@ -4,614 +4,339 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>秒杀商城 - 登录与注册</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/js/app-shell.js"></script>
     <style>
-        :root {
-            --bg: #f3f6fb;
-            --card: #ffffff;
-            --line: #e3e8f1;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --primary: #2563eb;
-            --primary-strong: #1d4ed8;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --info: #0369a1;
-            --radius: 14px;
-            --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            min-height: 100vh;
-            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: radial-gradient(circle at 10% 20%, #eaf2ff, #f7fff9 70%);
+            color: #111827;
         }
-
-        .shell {
-            width: min(1120px, calc(100% - 32px));
-            margin: 0 auto;
-            min-height: 100vh;
+        #app {
+            width: min(1120px, calc(100% - 24px));
+            margin: 12px auto;
             display: grid;
-            grid-template-columns: 1fr 420px;
-            gap: 20px;
-            align-items: center;
-            padding: 24px 0;
-        }
-
-        .hero,
-        .auth-card {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-        }
-
-        .hero {
-            padding: 28px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            width: fit-content;
-            gap: 8px;
-            padding: 6px 10px;
-            border-radius: 999px;
-            background: #eaf1ff;
-            color: #1e40af;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .eyebrow::before {
-            content: "";
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--primary);
-        }
-
-        h1 {
-            margin: 0;
-            font-size: clamp(1.9rem, 3vw, 2.8rem);
-            line-height: 1.2;
-        }
-
-        .hero p {
-            margin: 0;
-            color: var(--muted);
-            line-height: 1.7;
-        }
-
-        .hero-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
         }
-
-        .metric,
-        .tip-card {
-            border-radius: 12px;
-            border: 1px solid var(--line);
-            background: #f8fafc;
-            padding: 16px;
-        }
-
-        .metric strong {
-            display: block;
-            font-size: 1.4rem;
-            margin-bottom: 8px;
-        }
-
-        .metric span,
-        .tip-card p {
-            color: var(--muted);
-            line-height: 1.6;
-            margin: 0;
-        }
-
-        .tip-list {
+        .shell {
+            width: min(1120px, calc(100% - 24px));
+            margin: 0 auto;
             display: grid;
-            gap: 10px;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 12px;
+            align-items: stretch;
         }
-
-        .tip-item {
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-            line-height: 1.6;
-        }
-
-        .tip-dot {
-            width: 8px;
-            height: 8px;
-            margin-top: 7px;
-            border-radius: 50%;
-            background: var(--primary);
-            flex-shrink: 0;
-        }
-
-        .auth-card {
-            padding: 20px;
-        }
-
-        .tabbar {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            padding: 4px;
-            background: #f3f5f9;
-            border-radius: 10px;
-            margin-bottom: 18px;
-        }
-
-        .tab {
-            border: none;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            color: #4b5563;
-            background: transparent;
-            cursor: pointer;
-        }
-
-        .tab.active {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .panel {
-            display: none;
-        }
-
-        .panel.active {
-            display: block;
-        }
-
-        .panel h2 {
-            margin: 0 0 8px;
-            font-size: 1.5rem;
-        }
-
-        .panel-subtitle {
-            margin: 0 0 16px;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        .field {
-            margin-bottom: 12px;
-        }
-
-        .field label {
-            display: block;
-            margin-bottom: 6px;
-            color: #374151;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .input-wrap input {
-            width: 100%;
-            padding: 11px 12px;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
+        .card {
             background: #fff;
-            color: var(--text);
-            font-size: 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, .07);
+            padding: 18px;
         }
-
-        .input-wrap input::placeholder {
-            color: #9ca3af;
-        }
-
-        .input-wrap input:focus {
-            outline: none;
-            border-color: #93c5fd;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        }
-
-        .field-help {
-            margin-top: 6px;
-            color: #6b7280;
+        .hero h1 { margin: 10px 0 0; line-height: 1.2; font-size: clamp(1.6rem, 3.6vw, 2.4rem); }
+        .muted { color: #6b7280; line-height: 1.7; }
+        .tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-weight: 700;
             font-size: 12px;
         }
-
-        .cta {
+        .hero-grid { margin-top: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .mini { border: 1px solid #e5e7eb; background: #f8fafc; border-radius: 12px; padding: 12px; }
+        .mini strong { display: block; margin-bottom: 6px; }
+        .tabbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f3f4f6; padding: 6px; border-radius: 10px; }
+        .tab { border: 0; border-radius: 8px; padding: 10px; cursor: pointer; font-weight: 600; background: transparent; }
+        .tab.active { background: #2563eb; color: #fff; }
+        .panel { margin-top: 14px; }
+        .field { margin-bottom: 10px; }
+        .field label { display: block; font-size: 13px; margin-bottom: 6px; color: #374151; font-weight: 700; }
+        .field-row { display: flex; gap: 8px; align-items: center; }
+        .input {
             width: 100%;
-            padding: 12px;
-            border: none;
+            border: 1px solid #d1d5db;
             border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            color: #fff;
-            background: var(--primary);
+            padding: 10px 12px;
+            outline: none;
+        }
+        .input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); }
+        .icon-btn {
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: #fff;
+            color: #334155;
             cursor: pointer;
-        }
-
-        .cta:hover:not(:disabled) {
-            background: var(--primary-strong);
-        }
-
-        .cta:disabled {
-            opacity: 0.7;
-            cursor: wait;
-        }
-
-        .inline-action {
-            margin-top: 12px;
-            color: var(--muted);
+            padding: 10px 12px;
+            white-space: nowrap;
             font-size: 13px;
+        }
+        .btn {
+            width: 100%;
+            border: 0;
+            border-radius: 10px;
+            background: #2563eb;
+            color: #fff;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn:disabled { opacity: .7; cursor: wait; }
+        .switch {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6b7280;
             text-align: center;
         }
-
-        .inline-action button {
-            border: none;
-            background: transparent;
-            color: var(--primary-strong);
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .message {
-            display: none;
-            margin-top: 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            line-height: 1.6;
-            font-size: 13px;
-        }
-
-        .message.show {
-            display: block;
-        }
-
-        .message.success {
-            background: #ecfdf3;
-            border: 1px solid #86efac;
-            color: #166534;
-        }
-
-        .message.error {
-            background: #fef2f2;
-            border: 1px solid #fca5a5;
-            color: #991b1b;
-        }
-
-        .message.info {
-            background: #eff6ff;
-            border: 1px solid #93c5fd;
-            color: #1e3a8a;
-        }
-
-        .footer-note {
-            margin-top: 14px;
+        .remember-row {
+            margin-top: 2px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
             color: #6b7280;
             font-size: 12px;
-            text-align: center;
         }
-
-        .api-note {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid #dbeafe;
-            background: #eff6ff;
-            color: #1e3a8a;
-            font-size: 12px;
-            line-height: 1.6;
+        .remember-row label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
         }
-
-        @media (max-width: 980px) {
-            .shell {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .shell {
-                width: min(100% - 20px, 1120px);
-            }
-
-            .hero-grid {
-                grid-template-columns: 1fr;
-            }
+        .switch button { border: 0; background: transparent; color: #1d4ed8; cursor: pointer; font-weight: 700; }
+        .message { margin-top: 10px; border-radius: 10px; padding: 9px 11px; font-size: 13px; }
+        .message.info { background: #eff6ff; color: #1e40af; }
+        .message.success { background: #dcfce7; color: #166534; }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .mini { transition: transform .2s ease, box-shadow .2s ease; }
+        .mini:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(15, 23, 42, .08); }
+        .panel { animation: uiFadeUp .28s ease both; }
+        @media (max-width: 900px) {
+            .shell { grid-template-columns: 1fr; }
+            .hero-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body>
-<main class="shell">
-    <section class="hero">
-        <span class="eyebrow">实时秒杀体验升级中</span>
-        <div>
-            <h1>更快进入活动<br>更清晰掌握库存</h1>
-        </div>
-        <p>
-            登录后即可查看当前秒杀商品、活动时间和库存状态。注册页会先做基础校验，成功后自动进入商城主页，减少来回跳转。
-        </p>
+<body class="ui-compact ui-motion">
+<div id="app">
+    <top-nav :active="navActive" mode="guest" :show-logout="false"></top-nav>
+
+    <main class="shell">
+    <section class="card hero fx-enter" style="--enter-delay: 40ms;">
+        <span class="tag">秒杀商城</span>
+        <h1>登录后进入秒杀专区<br>查看商品并提交订单</h1>
+        <p class="muted">支持实时库存展示、异步下单与订单状态查询。</p>
         <div class="hero-grid">
-            <div class="metric">
-                <strong>3 步</strong>
-                <span>注册、登录、开抢一条链路直达，减少不必要的页面干扰。</span>
+            <div class="mini">
+                <strong>极速体验</strong>
+                <span class="muted">高并发场景下仍可稳定处理请求。</span>
             </div>
-            <div class="metric">
-                <strong>实时</strong>
-                <span>倒计时、库存展示和按钮状态会根据活动进度自动变化。</span>
+            <div class="mini">
+                <strong>正品保障</strong>
+                <span class="muted">商品信息、价格和库存均可直接查看。</span>
             </div>
-            <div class="tip-card">
-                <div class="tip-list">
-                    <div class="tip-item">
-                        <span class="tip-dot"></span>
-                        <span><b>更稳的提示</b>：统一成功、失败、加载中的反馈样式。</span>
-                    </div>
-                    <div class="tip-item">
-                        <span class="tip-dot"></span>
-                        <span><b>更清楚的状态</b>：避免乱码和错误字符串拼接，信息能直接读懂。</span>
-                    </div>
-                </div>
-            </div>
-            <div class="tip-card">
-                <p>如果你已经有账号，可以直接登录；如果是首次进入，注册成功后会自动保存用户名用于后续页面展示。</p>
+            <div class="mini" style="grid-column: span 2;">
+                <strong>新用户提示</strong>
+                <span class="muted">注册成功后会自动进入控制台。</span>
             </div>
         </div>
     </section>
 
-    <section class="auth-card">
-        <div class="tabbar" role="tablist" aria-label="登录和注册切换">
-            <button class="tab active" type="button" data-target="login-panel">登录</button>
-            <button class="tab" type="button" data-target="register-panel">注册</button>
+    <section class="card fx-enter" style="--enter-delay: 120ms;">
+        <div class="tabbar" role="tablist" aria-label="登录注册切换">
+            <button class="tab" :class="{active: tab==='login'}" @click="switchTab('login')">登录</button>
+            <button class="tab" :class="{active: tab==='register'}" @click="switchTab('register')">注册</button>
         </div>
 
-        <div id="login-panel" class="panel active">
-            <h2>欢迎回来</h2>
-            <p class="panel-subtitle">输入账号和密码，快速回到秒杀主会场。</p>
-            <form id="login-form" novalidate>
-                <div class="field">
-                    <label for="login-username">用户名</label>
-                    <div class="input-wrap">
-                        <input id="login-username" name="username" type="text" autocomplete="username" placeholder="请输入用户名">
-                    </div>
-                </div>
-                <div class="field">
-                    <label for="login-password">密码</label>
-                    <div class="input-wrap">
-                        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码">
-                    </div>
-                </div>
-                <button id="login-submit" class="cta" type="submit">登录并进入商城</button>
-                <div id="login-message" class="message" role="status" aria-live="polite"></div>
-            </form>
-            <div class="inline-action">
-                还没有账号？
-                <button type="button" data-switch="register-panel">立即注册</button>
+        <div class="panel" v-if="tab==='login'">
+            <h2 style="margin:0 0 8px;">欢迎回来</h2>
+            <p class="muted" style="margin:0 0 12px;">输入账号密码即可登录。</p>
+            <div class="field">
+                <label for="login-username">用户名</label>
+                <input id="login-username" class="input" v-model.trim="login.username" autocomplete="username" placeholder="请输入用户名">
             </div>
-        </div>
-
-        <div id="register-panel" class="panel">
-            <h2>创建账号</h2>
-            <p class="panel-subtitle">先完成基础信息登记，再进入秒杀首页查看活动商品。</p>
-            <form id="register-form" novalidate>
-                <div class="field">
-                    <label for="reg-username">用户名</label>
-                    <div class="input-wrap">
-                        <input id="reg-username" name="username" type="text" autocomplete="username" placeholder="建议 2-20 位，方便识别">
-                    </div>
+            <div class="field">
+                <label for="login-password">密码</label>
+                <div class="field-row">
+                    <input id="login-password" class="input" :type="loginPasswordVisible ? 'text' : 'password'" v-model.trim="login.password" autocomplete="current-password" placeholder="请输入密码" @keyup.enter="submitLogin">
+                    <button type="button" class="icon-btn" @click="loginPasswordVisible = !loginPasswordVisible">{{ loginPasswordVisible ? '隐藏' : '显示' }}</button>
                 </div>
-                <div class="field">
-                    <label for="reg-password">密码</label>
-                    <div class="input-wrap">
-                        <input id="reg-password" name="password" type="password" autocomplete="new-password" placeholder="至少 6 位">
-                    </div>
-                    <div class="field-help">当前后端只做基础账号校验，这里会先做前端长度判断。</div>
-                </div>
-                <div class="field">
-                    <label for="reg-phone">手机号</label>
-                    <div class="input-wrap">
-                        <input id="reg-phone" name="phone" type="tel" autocomplete="tel" placeholder="选填，11 位手机号">
-                    </div>
-                </div>
-                <button id="register-submit" class="cta" type="submit">注册并进入商城</button>
-                <div id="register-message" class="message" role="status" aria-live="polite"></div>
-            </form>
-            <div class="inline-action">
-                已有账号？
-                <button type="button" data-switch="login-panel">直接登录</button>
             </div>
+            <div class="remember-row">
+                <label>
+                    <input type="checkbox" v-model="rememberMe">
+                    记住我的用户名
+                </label>
+                <span>按 Enter 可直接登录</span>
+            </div>
+            <button class="btn" :disabled="loginLoading" @click="submitLogin">{{ loginLoading ? '登录中...' : '登录并进入商城' }}</button>
+            <div class="switch">还没有账号？<button @click="switchTab('register')">立即注册</button></div>
+            <div v-if="loginMessage.text" :class="['message', loginMessage.type]">{{ loginMessage.text }}</div>
         </div>
 
-        <div class="api-note">
-            当前页面已对接后端接口：`POST /api/users/register`、`POST /api/users/login`。登录后会写入本地会话并跳转到 `main.html`。
+        <div class="panel" v-else>
+            <h2 style="margin:0 0 8px;">创建账号</h2>
+            <p class="muted" style="margin:0 0 12px;">完成注册后将跳转到控制台。</p>
+            <div class="field">
+                <label for="reg-username">用户名</label>
+                <input id="reg-username" class="input" v-model.trim="register.username" autocomplete="username" placeholder="建议 2-20 位，便于识别">
+            </div>
+            <div class="field">
+                <label for="reg-password">密码</label>
+                <input id="reg-password" class="input" type="password" v-model.trim="register.password" autocomplete="new-password" placeholder="至少 6 位">
+            </div>
+            <div class="field">
+                <label for="reg-phone">手机号(可选)</label>
+                <input id="reg-phone" class="input" v-model.trim="register.phone" autocomplete="tel" placeholder="11 位大陆手机号">
+            </div>
+            <button class="btn" :disabled="registerLoading" @click="submitRegister">{{ registerLoading ? '注册中...' : '注册并进入商城' }}</button>
+            <div class="switch">已有账号？<button @click="switchTab('login')">直接登录</button></div>
+            <div v-if="registerMessage.text" :class="['message', registerMessage.type]">{{ registerMessage.text }}</div>
         </div>
-        <div class="footer-note">前端已统一走相对路径接口 `/api/users/*`，部署到 Spring Boot 静态资源目录后可直接访问。</div>
     </section>
-</main>
+    </main>
+</div>
 
 <script>
-    const USER_API_BASE = "/api/users";
-    const STORAGE_KEYS = {
-        username: "seckill_username",
-        token: "seckill_login_token"
-    };
-
-    const tabs = Array.from(document.querySelectorAll(".tab"));
-    const panels = Array.from(document.querySelectorAll(".panel"));
-    const switchButtons = Array.from(document.querySelectorAll("[data-switch]"));
-    const loginForm = document.getElementById("login-form");
-    const registerForm = document.getElementById("register-form");
-    const loginSubmit = document.getElementById("login-submit");
-    const registerSubmit = document.getElementById("register-submit");
-    const loginMessage = document.getElementById("login-message");
-    const registerMessage = document.getElementById("register-message");
-
-    function activatePanel(targetId) {
-        tabs.forEach((tab) => {
-            tab.classList.toggle("active", tab.dataset.target === targetId);
-        });
-        panels.forEach((panel) => {
-            panel.classList.toggle("active", panel.id === targetId);
-        });
-    }
-
-    tabs.forEach((tab) => {
-        tab.addEventListener("click", () => activatePanel(tab.dataset.target));
-    });
-
-    switchButtons.forEach((button) => {
-        button.addEventListener("click", () => activatePanel(button.dataset.switch));
-    });
-
-    function showMessage(element, type, text) {
-        element.textContent = text;
-        element.className = "message show " + type;
-    }
-
-    function clearMessage(element) {
-        element.textContent = "";
-        element.className = "message";
-    }
-
-    function setButtonLoading(button, isLoading, loadingText, defaultText) {
-        button.disabled = isLoading;
-        button.textContent = isLoading ? loadingText : defaultText;
-    }
-
-    function saveUserSession(username, token) {
-        localStorage.setItem(STORAGE_KEYS.username, username);
-        if (token) {
-            localStorage.setItem(STORAGE_KEYS.token, token);
-        }
-    }
-
-    function redirectToMainPage() {
-        window.location.href = "/main.html";
-    }
-
-    function normalizeMessage(raw, fallbackText) {
-        if (typeof raw !== "string" || !raw.trim()) {
-            return fallbackText;
-        }
-        return raw.trim();
-    }
-
-    function validateRegisterForm(payload) {
-        if (!payload.username || !payload.password) {
-            return "用户名和密码不能为空。";
-        }
-        if (payload.username.length < 2 || payload.username.length > 20) {
-            return "用户名长度需在 2 到 20 位之间。";
-        }
-        if (payload.password.length < 6) {
-            return "密码长度不能少于 6 位。";
-        }
-        if (payload.phone && !/^1\d{10}$/.test(payload.phone)) {
-            return "手机号格式不正确，请输入 11 位大陆手机号。";
-        }
-        return "";
-    }
-
-    async function requestJson(url, options) {
-        const response = await fetch(url, options);
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) {
-            throw new Error("服务端返回的不是 JSON 数据。");
-        }
-        return response.json();
-    }
-
-    loginForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        clearMessage(loginMessage);
-
-        const username = document.getElementById("login-username").value.trim();
-        const password = document.getElementById("login-password").value.trim();
-
-        if (!username || !password) {
-            showMessage(loginMessage, "error", "请输入用户名和密码。");
-            return;
-        }
-
-        setButtonLoading(loginSubmit, true, "登录中...", "登录并进入商城");
-        showMessage(loginMessage, "info", "正在验证账号信息...");
-
-        try {
-            const result = await requestJson(USER_API_BASE + "/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password })
-            });
-
-            if (result.code === 200) {
-                saveUserSession(username, result.data);
-                showMessage(loginMessage, "success", "登录成功，正在进入商城主页...");
-                loginForm.reset();
-                setTimeout(redirectToMainPage, 900);
-                return;
+    const { createApp } = Vue;
+    createApp({
+        components: {
+            TopNav: SeckillUi.TopNav
+        },
+        data() {
+            return {
+                tab: "login",
+                loginLoading: false,
+                registerLoading: false,
+                loginPasswordVisible: false,
+                rememberMe: localStorage.getItem("seckill_remember_username") === "1",
+                login: {
+                    username: localStorage.getItem("seckill_username") || "",
+                    password: ""
+                },
+                register: {
+                    username: "",
+                    password: "",
+                    phone: ""
+                },
+                loginMessage: { type: "info", text: "" },
+                registerMessage: { type: "info", text: "" }
+            };
+        },
+        computed: {
+            navActive() {
+                return this.tab === "register" ? "register" : "index";
             }
-
-            showMessage(loginMessage, "error", "登录失败：" + normalizeMessage(result.msg, "请检查账号或密码。"));
-        } catch (error) {
-            showMessage(loginMessage, "error", "登录请求失败，请确认后端服务已启动。");
-            console.error("login request failed", error);
-        } finally {
-            setButtonLoading(loginSubmit, false, "登录中...", "登录并进入商城");
-        }
-    });
-
-    registerForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        clearMessage(registerMessage);
-
-        const payload = {
-            username: document.getElementById("reg-username").value.trim(),
-            password: document.getElementById("reg-password").value.trim(),
-            phone: document.getElementById("reg-phone").value.trim()
-        };
-
-        const validationMessage = validateRegisterForm(payload);
-        if (validationMessage) {
-            showMessage(registerMessage, "error", validationMessage);
-            return;
-        }
-
-        setButtonLoading(registerSubmit, true, "注册中...", "注册并进入商城");
-        showMessage(registerMessage, "info", "正在创建账号...");
-
-        try {
-            const result = await requestJson(USER_API_BASE + "/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            if (result.code === 200) {
-                saveUserSession(payload.username, "");
-                showMessage(registerMessage, "success", "注册成功，正在进入商城主页...");
-                registerForm.reset();
-                setTimeout(redirectToMainPage, 900);
-                return;
+        },
+        methods: {
+            switchTab(target) {
+                this.tab = target;
+                this.loginMessage.text = "";
+                this.registerMessage.text = "";
+            },
+            normalizeMessage(raw, fallbackText) {
+                if (typeof raw !== "string" || !raw.trim()) return fallbackText;
+                return raw.trim();
+            },
+            setMessage(kind, type, text) {
+                if (kind === "login") {
+                    this.loginMessage = { type, text };
+                    return;
+                }
+                this.registerMessage = { type, text };
+            },
+            goMain() {
+                window.location.href = "/main.html";
+            },
+            validateRegister() {
+                const payload = this.register;
+                if (!payload.username || !payload.password) return "用户名和密码不能为空。";
+                if (payload.username.length < 2 || payload.username.length > 20) return "用户名长度需在 2 到 20 位之间。";
+                if (payload.password.length < 6) return "密码长度不能少于 6 位。";
+                if (payload.phone && !/^1\d{10}$/.test(payload.phone)) return "手机号格式不正确，请输入 11 位大陆手机号。";
+                return "";
+            },
+            async requestJson(url, options) {
+                const response = await fetch(url, options);
+                const contentType = response.headers.get("content-type") || "";
+                if (!contentType.includes("application/json")) {
+                    throw new Error("服务端返回的不是 JSON 数据");
+                }
+                return response.json();
+            },
+            async submitLogin() {
+                if (!this.login.username || !this.login.password) {
+                    this.setMessage("login", "error", "请输入用户名和密码。");
+                    return;
+                }
+                this.loginLoading = true;
+                this.setMessage("login", "info", "正在验证账号信息...");
+                try {
+                    const result = await this.requestJson("/api/users/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: this.login.username, password: this.login.password })
+                    });
+                    if (result.code === 200) {
+                        if (this.rememberMe) {
+                            localStorage.setItem("seckill_remember_username", "1");
+                        } else {
+                            localStorage.removeItem("seckill_remember_username");
+                        }
+                        SeckillUi.saveSession(this.login.username, result.data || "");
+                        this.setMessage("login", "success", "登录成功，正在进入商城主页...");
+                        this.login.password = "";
+                        setTimeout(this.goMain, 800);
+                        return;
+                    }
+                    this.setMessage("login", "error", "登录失败: " + this.normalizeMessage(result.msg, "请检查账号或密码。"));
+                } catch (e) {
+                    this.setMessage("login", "error", "登录请求失败，请确认后端服务已启动。");
+                } finally {
+                    this.loginLoading = false;
+                }
+            },
+            async submitRegister() {
+                const errorText = this.validateRegister();
+                if (errorText) {
+                    this.setMessage("register", "error", errorText);
+                    return;
+                }
+                this.registerLoading = true;
+                this.setMessage("register", "info", "正在创建账号...");
+                try {
+                    const result = await this.requestJson("/api/users/register", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(this.register)
+                    });
+                    if (result.code === 200) {
+                        SeckillUi.saveSession(this.register.username, "");
+                        this.setMessage("register", "success", "注册成功，正在进入商城主页...");
+                        this.register = { username: "", password: "", phone: "" };
+                        setTimeout(this.goMain, 900);
+                        return;
+                    }
+                    this.setMessage("register", "error", "注册失败: " + this.normalizeMessage(result.msg, "请稍后重试。"));
+                } catch (e) {
+                    this.setMessage("register", "error", "注册请求失败，请确认后端服务已启动。");
+                } finally {
+                    this.registerLoading = false;
+                }
             }
-
-            showMessage(registerMessage, "error", "注册失败：" + normalizeMessage(result.msg, "请稍后重试。"));
-        } catch (error) {
-            showMessage(registerMessage, "error", "注册请求失败，请确认后端服务已启动。");
-            console.error("register request failed", error);
-        } finally {
-            setButtonLoading(registerSubmit, false, "注册中...", "注册并进入商城");
+        },
+        mounted() {
+            const hint = SeckillUi.readLoginHint();
+            if (hint) {
+                this.setMessage("login", "info", hint);
+            }
         }
-    });
-
-    const cachedUsername = localStorage.getItem(STORAGE_KEYS.username);
-    if (cachedUsername) {
-        document.getElementById("login-username").value = cachedUsername;
-    }
+    }).mount("#app");
 </script>
 </body>
 </html>

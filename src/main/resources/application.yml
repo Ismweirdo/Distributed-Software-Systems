@@ -43,7 +43,7 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        spring.json.add.type.headers: false
+        spring.json.add.type.headers: true
         max.block.ms: 2000
         request.timeout.ms: 2000
         delivery.timeout.ms: 4000
@@ -54,7 +54,6 @@ spring:
       auto-offset-reset: earliest
       properties:
         spring.json.trusted.packages: com.seckill.messaging
-        spring.json.value.default.type: com.seckill.messaging.SeckillOrderCreateMessage
     listener:
       ack-mode: record
 
@@ -68,6 +67,7 @@ seckill:
     pending-ttl-seconds: 60
     failed-ttl-seconds: 120
   kafka:
+    enabled: false
     send-timeout-ms: 1500
     topics:
       order-create: seckill.order.create

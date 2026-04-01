@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderCreateProducer {
+public class OrderPayProducer {
 
-    private final KafkaTemplate<String, SeckillOrderCreateMessage> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    @Value("${seckill.kafka.topics.order-create}")
-    private String orderCreateTopic;
+    @Value("${seckill.kafka.topics.order-pay}")
+    private String orderPayTopic;
 
     @Value("${seckill.kafka.send-timeout-ms:1500}")
     private long sendTimeoutMs;
@@ -25,23 +25,21 @@ public class OrderCreateProducer {
     @Value("${seckill.kafka.enabled:false}")
     private boolean kafkaEnabled;
 
-    public boolean send(SeckillOrderCreateMessage message) {
+    public boolean send(SeckillOrderPayMessage message) {
         if (!kafkaEnabled) {
-            log.debug("Kafka已关闭，跳过异步发送: orderId={}", message.getOrderId());
             return false;
         }
         try {
-            SendResult<String, SeckillOrderCreateMessage> result = kafkaTemplate
-                    .send(orderCreateTopic, String.valueOf(message.getOrderId()), message)
+            SendResult<String, Object> result = kafkaTemplate
+                    .send(orderPayTopic, String.valueOf(message.getOrderId()), message)
                     .get(sendTimeoutMs, TimeUnit.MILLISECONDS);
-            log.info("发送下单消息成功: orderId={}, topic={}, partition={}, offset={}",
+            log.info("发送支付消息成功: orderId={}, partition={}, offset={}",
                     message.getOrderId(),
-                    result.getRecordMetadata().topic(),
                     result.getRecordMetadata().partition(),
                     result.getRecordMetadata().offset());
             return true;
-        } catch (Exception e) {
-            log.error("发送下单消息失败: orderId={}", message.getOrderId(), e);
+        } catch (Exception exception) {
+            log.error("发送支付消息失败: orderId={}", message.getOrderId(), exception);
             return false;
         }
     }

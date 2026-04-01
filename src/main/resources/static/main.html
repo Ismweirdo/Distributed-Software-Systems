@@ -4,414 +4,189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>秒杀商城 - 控制台</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/js/app-shell.js"></script>
     <style>
-        :root {
-            --bg: #f3f6fb;
-            --card: #ffffff;
-            --line: #e3e8f1;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --primary: #2563eb;
-            --primary-strong: #1d4ed8;
-            --warning: #d97706;
-            --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-            --radius: 14px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            min-height: 100vh;
-            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-            color: var(--text);
-            background: var(--bg);
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(160deg, #f4f7ff 0%, #eefaf4 100%);
+            color: #1f2937;
         }
-
-        .page {
-            width: min(1120px, calc(100% - 32px));
-            margin: 0 auto;
-            padding: 24px 0 32px;
-        }
-
-        .hero {
-            padding: 24px;
-            border-radius: var(--radius);
-            border: 1px solid var(--line);
-            background: var(--card);
-            box-shadow: var(--shadow);
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 18px;
-        }
-
-        .brand {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .brand-tag {
-            width: fit-content;
-            padding: 5px 10px;
-            border-radius: 999px;
-            background: #eaf1ff;
-            color: #1e40af;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: clamp(1.8rem, 3.4vw, 2.5rem);
-            line-height: 1.2;
-        }
-
-        .hero p {
-            margin: 6px 0 0;
-            color: var(--muted);
-            line-height: 1.7;
-            max-width: 44rem;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 14px;
+        .page { width: min(1120px, calc(100% - 28px)); margin: 18px auto 26px; display: grid; gap: 14px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 6px 20px rgba(15, 23, 42, .06); padding: 18px; }
+        .hero { display: grid; gap: 14px; }
+        .row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .tag { display: inline-block; background: #e0ecff; color: #1d4ed8; border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+        h1 { margin: 8px 0 0; font-size: clamp(1.4rem, 3.2vw, 2rem); }
+        .muted { color: #6b7280; line-height: 1.7; }
+        .btn { border: 0; border-radius: 10px; padding: 9px 14px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .btn.primary { background: #2563eb; color: #fff; }
+        .btn.secondary { background: #eff6ff; color: #1d4ed8; }
+        .status-grid { display: grid; gap: 10px; }
+        .status-grid.primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .status-grid.secondary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .panel { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; }
+        .panel-title { font-size: 13px; color: #334155; font-weight: 700; margin-bottom: 6px; }
+        .panel-main { font-size: 1.05rem; color: #0f172a; font-weight: 700; }
+        .panel-sub { margin-top: 6px; color: #64748b; font-size: 12px; line-height: 1.6; }
+        .fold-toggle {
+            display: none;
+            border: 1px solid #dbe2f0;
             border-radius: 10px;
-            border: 1px solid transparent;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 700;
+            background: #fff;
+            color: #1d4ed8;
+            padding: 8px 12px;
+            font-size: 13px;
             cursor: pointer;
         }
-
-        .btn-primary {
-            color: #fff;
-            background: var(--primary);
+        .notice { border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+        .notice.info { background: #eff6ff; color: #1e40af; }
+        .notice.ok { background: #ecfdf3; color: #166534; }
+        ul { margin: 10px 0 0; padding-left: 18px; color: #4b5563; }
+        @media (max-width: 900px) {
+            .status-grid.primary,
+            .status-grid.secondary { grid-template-columns: 1fr; }
         }
-
-        .btn-primary:hover {
-            background: var(--primary-strong);
-        }
-
-        .btn-secondary {
-            color: #374151;
-            background: #fff;
-            border-color: #d1d5db;
-        }
-
-        .btn-secondary:hover {
-            background: #f8fafc;
-        }
-
-        .hero-grid {
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 12px;
-        }
-
-        .user-panel {
-            padding: 14px;
-            border-radius: 12px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-        }
-
-        .user-panel strong {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 1rem;
-        }
-
-        .user-meta {
-            color: var(--muted);
-            line-height: 1.6;
-            font-size: 14px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin-top: 14px;
-        }
-
-        .card {
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--line);
-            background: var(--card);
-            box-shadow: var(--shadow);
-        }
-
-        .card h2 {
-            margin: 0 0 8px;
-            font-size: 1.1rem;
-        }
-
-        .card p {
-            margin: 0;
-            color: var(--muted);
-            line-height: 1.6;
-            font-size: 14px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .stat {
-            padding: 12px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-        }
-
-        .stat span {
-            display: block;
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 6px;
-        }
-
-        .stat strong {
-            font-size: 1.1rem;
-        }
-
-        .timeline {
-            display: grid;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .timeline-item {
-            padding: 10px 12px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-            line-height: 1.6;
-            font-size: 14px;
-            color: #374151;
-        }
-
-        .notice {
-            margin-top: 12px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            color: var(--warning);
-            line-height: 1.6;
-            font-size: 14px;
-        }
-
-        .notice.info {
-            background: #eff6ff;
-            border-color: #93c5fd;
-            color: #1e3a8a;
-        }
-
-        .notice.success {
-            background: #ecfdf3;
-            border-color: #86efac;
-            color: #166534;
-        }
-
-        .mini-list {
-            margin-top: 10px;
-            display: grid;
-            gap: 6px;
-            color: #4b5563;
-            font-size: 13px;
-        }
-
-        @media (max-width: 980px) {
-            .hero-grid,
-            .grid,
-            .stats {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 760px) {
+            .page { width: calc(100% - 16px); margin: 8px auto 14px; gap: 10px; }
+            .card { padding: 14px; }
+            .row { gap: 8px; }
+            .row .btn { width: 100%; text-align: center; }
+            .fold-toggle { display: inline-block; }
+            .status-grid.secondary.mobile-hidden { display: none; }
         }
     </style>
 </head>
-<body>
-<main class="page">
-    <section class="hero">
-        <div class="topbar">
-            <div class="brand">
-                <span class="brand-tag">SECKILL DASHBOARD</span>
-                <h1>秒杀主会场已经准备就绪</h1>
-                <p>这里是进入商品页前的控制台。你可以直接查看当前登录用户、快速进入秒杀列表，也能一键退出并返回登录页。</p>
+<body class="ui-compact ui-motion">
+<div id="app" class="page">
+    <top-nav active="main" :username="username"></top-nav>
+
+    <section class="card hero fx-enter" style="--enter-delay: 40ms;">
+        <div class="row">
+            <div>
+                <span class="tag">USER CENTER</span>
+                <h1>欢迎回来，{{ username || "游客" }}</h1>
+                <p class="muted">这里可以快速进入商品页、订单页，并查看当前平台状态。</p>
             </div>
-            <div class="hero-actions">
-                <a class="btn btn-primary" href="/products.html">查看秒杀商品</a>
-                <a class="btn btn-secondary" href="/orders.html">我的订单</a>
-                <button id="logout-btn" class="btn btn-secondary" type="button">退出登录</button>
+            <div class="row">
+                <a class="btn primary" href="/products.html">进入秒杀专区</a>
+                <a class="btn secondary" href="/orders.html">查看我的订单</a>
+            </div>
+        </div>
+        <div class="status-grid primary">
+            <div class="panel">
+                <div class="panel-title">当前时间</div>
+                <div class="panel-main">{{ nowText }}</div>
+                <div class="panel-sub">每秒自动刷新。</div>
+            </div>
+            <div class="panel">
+                <div class="panel-title">平台状态</div>
+                <div class="panel-main" :class="{ 'fx-pulse': initOk }">{{ initStatusText }}</div>
+                <div class="panel-sub">{{ initOk ? '服务正常，可下单。' : '状态不可用，请稍后重试。' }}</div>
             </div>
         </div>
 
-        <div class="hero-grid">
-            <div class="user-panel">
-                <strong>当前用户：<span id="username-display">游客</span></strong>
-                <div class="user-meta">
-                    登录状态将保存在本地浏览器中，用于主页和商品页展示。
-                    <br>
-                    如果是首次注册进入，这里会自动回填刚刚保存的用户名。
-                </div>
+        <button class="fold-toggle" type="button" @click="showSecondaryStatus = !showSecondaryStatus">
+            {{ showSecondaryStatus ? '收起次级信息' : '展开次级信息' }}
+        </button>
+
+        <div class="status-grid secondary" :class="{ 'mobile-hidden': !showSecondaryStatus }">
+            <div class="panel">
+                <div class="panel-title">用户提示</div>
+                <div class="panel-main">下单后关注订单页</div>
+                <div class="panel-sub">订单状态会异步更新。</div>
             </div>
-            <div class="user-panel">
-                <strong>当前时间</strong>
-                <div class="user-meta" id="current-time">--</div>
+            <div class="panel">
+                <div class="panel-title">登录会话</div>
+                <div class="panel-main">{{ sessionHint }}</div>
+                <div class="panel-sub">支持自动过期与退出登录。</div>
             </div>
         </div>
     </section>
 
-    <section class="grid">
-        <article class="card">
-            <h2>今日作战视图</h2>
-            <p>商品页已经补上活动状态识别、库存压力展示和按钮禁用逻辑，进入后可以更直观地判断什么时候能抢、还能不能抢。</p>
-            <div class="stats">
-                <div class="stat">
-                    <span>入口效率</span>
-                    <strong>更顺</strong>
-                </div>
-                <div class="stat">
-                    <span>提示状态</span>
-                    <strong>更清楚</strong>
-                </div>
-                <div class="stat">
-                    <span>操作反馈</span>
-                    <strong>更及时</strong>
-                </div>
-            </div>
-        </article>
-
-        <article class="card">
-            <h2>推荐操作</h2>
-            <div class="timeline">
-                <div class="timeline-item"><b>1.</b> 先进入商品列表，确认活动是否已开始。</div>
-                <div class="timeline-item"><b>2.</b> 关注库存标记和倒计时，避免在未开始时反复点击。</div>
-                <div class="timeline-item"><b>3.</b> 成功秒杀后会自动刷新商品状态，方便继续观察库存变化。</div>
-            </div>
-        </article>
-
-        <article class="card">
-            <h2>系统状态</h2>
-            <p>这里会读取后端健康接口，展示初始化情况，方便前端联调时确认商品数据与启动状态。</p>
-            <div class="notice info" id="notice-box">正在检查登录信息与系统状态...</div>
-            <div class="mini-list" id="health-meta"></div>
-        </article>
+    <section class="card fx-enter" style="--enter-delay: 120ms;">
+        <div :class="['notice', initOk ? 'ok' : 'info']">{{ notice }}</div>
+        <ul>
+            <li v-for="line in healthLines" :key="line">{{ line }}</li>
+        </ul>
     </section>
-</main>
+</div>
 
 <script>
-    const STORAGE_KEYS = {
-        username: "seckill_username",
-        token: "seckill_login_token"
-    };
-
-    const usernameDisplay = document.getElementById("username-display");
-    const currentTime = document.getElementById("current-time");
-    const noticeBox = document.getElementById("notice-box");
-    const healthMeta = document.getElementById("health-meta");
-    const logoutButton = document.getElementById("logout-btn");
-
-    function getUrlParameter(name) {
-        const url = new URL(window.location.href);
-        return url.searchParams.get(name) || "";
-    }
-
-    function getUsername() {
-        return localStorage.getItem(STORAGE_KEYS.username) || getUrlParameter("username");
-    }
-
-    function updateCurrentTime() {
-        const now = new Date();
-        currentTime.textContent = now.toLocaleString("zh-CN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
-        });
-    }
-
-    function redirectToLogin() {
-        window.location.href = "/index.html";
-    }
-
-    async function loadInitStatus() {
-        healthMeta.textContent = "";
-        try {
-            const response = await fetch("/api/health/init-status");
-            const result = await response.json();
-            if (result.code !== 200 || !result.data) {
-                throw new Error(result.msg || "状态接口返回异常");
+    const { createApp } = Vue;
+    createApp({
+        components: {
+            TopNav: SeckillUi.TopNav
+        },
+        data() {
+            return {
+                username: "",
+                nowText: "--",
+                notice: "正在加载平台状态...",
+                initStatusText: "同步中",
+                initOk: false,
+                healthLines: [],
+                showSecondaryStatus: false
+            };
+        },
+        computed: {
+            sessionHint() {
+                const hours = Math.floor(SeckillUi.getSessionMaxAgeMs() / 3600000);
+                return "登录有效期约 " + hours + " 小时";
             }
-            const data = result.data;
-            noticeBox.className = "notice success";
-            noticeBox.textContent = "系统状态正常，可进行商品浏览、秒杀与搜索联调。";
-            healthMeta.innerHTML = [
-                "商品总数：" + (data.productCount ?? 0),
-                "本次启动是否初始化商品：" + (data.seededThisStartup ? "是" : "否"),
-                "应用启动时间：" + (data.appStartupTime || "--")
-            ].map((line) => "<div>" + line + "</div>").join("");
-        } catch (error) {
-            noticeBox.className = "notice";
-            noticeBox.textContent = "系统状态获取失败，请确认后端接口可访问。";
-            healthMeta.innerHTML = "<div>错误信息：" + (error.message || "未知错误") + "</div>";
+        },
+        methods: {
+            getUsername() {
+                const byStorage = SeckillUi.getUsername();
+                if (byStorage) return byStorage;
+                const url = new URL(window.location.href);
+                return url.searchParams.get("username") || "";
+            },
+            updateClock() {
+                this.nowText = new Date().toLocaleString("zh-CN");
+            },
+            async loadInitStatus() {
+                try {
+                    const res = await fetch("/api/health/init-status");
+                    const result = await res.json();
+                    if (result.code !== 200 || !result.data) {
+                        throw new Error(result.msg || "获取失败");
+                    }
+                    const data = result.data;
+                    this.initOk = true;
+                    this.initStatusText = "运行平稳";
+                    this.notice = "系统运行正常，可放心参与秒杀。";
+                    this.healthLines = [
+                        "在售商品总数: " + (data.productCount ?? 0),
+                        "本次启动是否触发导入: " + (data.seededThisStartup ? "是" : "否"),
+                        "应用启动时间: " + (data.appStartupTime || "--")
+                    ];
+                } catch (e) {
+                    this.initOk = false;
+                    this.initStatusText = "部分信息不可用";
+                    this.notice = "暂时无法获取平台状态，请稍后重试。";
+                    this.healthLines = ["后端接口异常: " + (e.message || "未知错误")];
+                }
+            }
+        },
+        mounted() {
+            if (!SeckillUi.ensureAuth({ requireToken: false })) {
+                return;
+            }
+            this.username = this.getUsername();
+            if (!this.username) {
+                this.notice = "未检测到登录用户，即将返回登录页。";
+                setTimeout(() => window.location.href = "/index.html", 1200);
+                return;
+            }
+            localStorage.setItem(SeckillUi.STORAGE_KEYS.username, this.username);
+            this.updateClock();
+            this.loadInitStatus();
+            window.setInterval(this.updateClock, 1000);
         }
-    }
-
-    function initPage() {
-        const username = getUsername();
-        if (!username) {
-            noticeBox.textContent = "未检测到登录用户，2 秒后将返回登录页。";
-            setTimeout(redirectToLogin, 2000);
-            return;
-        }
-
-        localStorage.setItem(STORAGE_KEYS.username, username);
-        usernameDisplay.textContent = username;
-        noticeBox.className = "notice info";
-        noticeBox.textContent = "登录信息有效，正在加载后端系统状态...";
-        loadInitStatus();
-    }
-
-    logoutButton.addEventListener("click", () => {
-        const confirmed = window.confirm("确定退出当前登录状态吗？");
-        if (!confirmed) {
-            return;
-        }
-
-        localStorage.removeItem(STORAGE_KEYS.username);
-        localStorage.removeItem(STORAGE_KEYS.token);
-        redirectToLogin();
-    });
-
-    updateCurrentTime();
-    initPage();
-    window.setInterval(updateCurrentTime, 1000);
+    }).mount("#app");
 </script>
 </body>
 </html>

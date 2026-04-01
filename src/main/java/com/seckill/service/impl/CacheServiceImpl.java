@@ -36,8 +36,6 @@ public class CacheServiceImpl implements CacheService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final SeckillProductMapper productMapper;
 
-    // 使用 Redis 分布式锁，避免单机 ReentrantLock 无法跨实例生效
-
     @Override
     public SeckillProductVO getProductFromCache(Long productId) {
         if (productId == null || productId <= 0) {
@@ -50,7 +48,6 @@ public class CacheServiceImpl implements CacheService {
             return unwrapCacheValue(cachedValue, productId);
         }
 
-        // 布隆过滤器判断（如果确定不存在，避免穿透到 DB）
         if (!mightExistInBloomFilter(productId)) {
             log.info("布隆过滤器判定不存在: productId={}", productId);
             return null;
@@ -68,7 +65,7 @@ public class CacheServiceImpl implements CacheService {
             if (latestCachedValue != null) {
                 return unwrapCacheValue(latestCachedValue, productId);
             }
-            SeckillProduct product = productMapper.selectById(productId);
+            SeckillProduct product = productMapper.selectById(productId);
             if (product == null) {
                 cacheNullValue(cacheKey);
                 log.info("缓存空值写入成功: productId={}", productId);
@@ -117,7 +114,6 @@ public class CacheServiceImpl implements CacheService {
         try {
             redisTemplate.opsForValue().setBit(BLOOM_FILTER_KEY, bloomOffset(productId), true);
         } catch (Exception e) {
-            // If Redis is unavailable during startup or tests, log and continue — Bloom filter is an optimization.
             log.warn("无法连接到Redis，正在跳过将商品加入布隆过滤器: productId={},原因={}", productId, e.getMessage());
         }
     }
@@ -173,7 +169,6 @@ public class CacheServiceImpl implements CacheService {
         return Math.floorMod(productId, BLOOM_FILTER_BUCKET_SIZE);
     }
 
-    /* ---------- Redis 分布式锁相关方法 ---------- */
     private boolean tryAcquireLock(String lockKey, String lockVal, long expireMillis) {
         Boolean success = redisTemplate.opsForValue().setIfAbsent(lockKey, lockVal, expireMillis, TimeUnit.MILLISECONDS);
         return Boolean.TRUE.equals(success);

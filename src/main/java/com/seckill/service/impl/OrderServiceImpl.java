@@ -7,6 +7,8 @@ import com.seckill.entity.SeckillProduct;
 import com.seckill.mapper.SeckillOrderMapper;
 import com.seckill.mapper.SeckillProductMapper;
 import com.seckill.messaging.SeckillOrderCreateMessage;
+import com.seckill.messaging.OrderPayProducer;
+import com.seckill.messaging.SeckillOrderPayMessage;
 import com.seckill.service.OrderService;
 import com.seckill.service.support.OrderProgressService;
 import com.seckill.vo.OrderQueryStatusVO;
@@ -17,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ public class OrderServiceImpl extends ServiceImpl<SeckillOrderMapper, SeckillOrd
 
     private final SeckillProductMapper seckillProductMapper;
     private final OrderProgressService orderProgressService;
+    private final OrderPayProducer orderPayProducer;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -68,14 +73,20 @@ public class OrderServiceImpl extends ServiceImpl<SeckillOrderMapper, SeckillOrd
     }
 
     @Override
-    public Result<OrderQueryStatusVO> queryOrderStatus(Long orderId) {
+    public Result<OrderQueryStatusVO> queryOrderStatus(Long orderId, Long currentUserId) {
         SeckillOrder order = getById(orderId);
         if (order != null) {
+            if (!order.getUserId().equals(currentUserId)) {
+                return Result.success(OrderQueryStatusVO.notFound("订单不存在"));
+            }
             orderProgressService.clear(orderId);
             return Result.success(OrderQueryStatusVO.created(order));
         }
 
         OrderProgressService.ProgressState progressState = orderProgressService.getState(orderId);
+        if (progressState.ownerUserId() != null && !progressState.ownerUserId().equals(currentUserId)) {
+            return Result.success(OrderQueryStatusVO.notFound("订单不存在"));
+        }
         if (OrderQueryStatusVO.PENDING.equals(progressState.status())) {
             return Result.success(OrderQueryStatusVO.pending(progressState.message()));
         }
@@ -91,5 +102,70 @@ public class OrderServiceImpl extends ServiceImpl<SeckillOrderMapper, SeckillOrd
                 .eq(SeckillOrder::getUserId, userId)
                 .orderByDesc(SeckillOrder::getCreateTime));
         return Result.success(orders);
+    }
+
+    @Override
+    public Result<String> payOrder(Long orderId, Long userId) {
+        SeckillOrder order = getById(orderId);
+        if (order == null) {
+            return Result.fail("订单不存在");
+        }
+        if (!order.getUserId().equals(userId)) {
+            return Result.fail("订单不存在");
+        }
+        if ("PAID".equals(order.getOrderStatus())) {
+            return Result.success("订单已支付");
+        }
+        if (!"CREATED".equals(order.getOrderStatus())) {
+            return Result.fail("当前状态不可支付");
+        }
+
+        SeckillOrderPayMessage message = new SeckillOrderPayMessage();
+        message.setMessageId(UUID.randomUUID().toString());
+        message.setOrderId(orderId);
+        message.setUserId(userId);
+        message.setPayAmount(safeAmount(order.getOrderAmount()));
+        message.setPayTime(LocalDateTime.now());
+
+        boolean sent = orderPayProducer.send(message);
+        if (!sent) {
+            PayResult payResult = confirmOrderPayment(message);
+            if (payResult == PayResult.SUCCESS || payResult == PayResult.ALREADY_PAID) {
+                return Result.success("支付成功");
+            }
+            return Result.fail("支付失败，请重试");
+        }
+        return Result.success("支付处理中");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public PayResult confirmOrderPayment(SeckillOrderPayMessage message) {
+        SeckillOrder order = getById(message.getOrderId());
+        if (order == null) {
+            return PayResult.ORDER_NOT_FOUND;
+        }
+        if (!order.getUserId().equals(message.getUserId())) {
+            return PayResult.FORBIDDEN;
+        }
+        if ("PAID".equals(order.getOrderStatus())) {
+            return PayResult.ALREADY_PAID;
+        }
+        if (!"CREATED".equals(order.getOrderStatus())) {
+            return PayResult.INVALID_STATUS;
+        }
+
+        boolean updated = lambdaUpdate()
+                .eq(SeckillOrder::getOrderId, message.getOrderId())
+                .eq(SeckillOrder::getOrderStatus, "CREATED")
+                .set(SeckillOrder::getOrderStatus, "PAID")
+                .set(SeckillOrder::getPayTime, message.getPayTime() == null ? LocalDateTime.now() : message.getPayTime())
+                .set(SeckillOrder::getUpdateTime, LocalDateTime.now())
+                .update();
+        return updated ? PayResult.SUCCESS : PayResult.INVALID_STATUS;
+    }
+
+    private BigDecimal safeAmount(BigDecimal amount) {
+        return amount == null ? BigDecimal.ZERO : amount;
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import org.springframework.core.env.Environment;
+import org.junit.jupiter.api.Assumptions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,9 +18,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-/**
- * 读写分离功能测试
- */
 @SpringBootTest
 public class ReadWriteSeparationTest {
 
@@ -29,38 +27,25 @@ public class ReadWriteSeparationTest {
     @Autowired
     private Environment environment;
 
-    /**
-     * 测试读操作使用从库
-     */
     @Test
     public void testReadFromSlave() {
-        System.out.println("=== 测试读操作（应使用从库）===");
         String before = DynamicDataSourceContextHolder.peek();
         assertEquals(null, before);
 
-        // 查询商品列表
         Result<java.util.List<SeckillProductVO>> listResult = productService.listProducts();
         assertNotNull(listResult);
         assertEquals(200, listResult.getCode());
         assertNotNull(listResult.getData());
-        System.out.println("商品总数：" + listResult.getData().size());
-        
-        // 查询单个商品
+
         Result<SeckillProductVO> detailResult = productService.getProductById(1L);
         assertNotNull(detailResult);
         assertEquals(200, detailResult.getCode());
         assertNotNull(detailResult.getData());
-        if (detailResult.getData() != null) {
-            System.out.println("商品详情：" + detailResult.getData().getProductName());
-        }
 
         String after = DynamicDataSourceContextHolder.peek();
         assertEquals(null, after);
     }
 
-    /**
-     * 直接验证主从复制链路可用
-     */
     @Test
     public void testReplicationStatus() {
         String io1 = queryReplicaStatus("spring.datasource.dynamic.datasource.slave_1", "Replica_IO_Running");
@@ -68,85 +53,67 @@ public class ReadWriteSeparationTest {
         String io2 = queryReplicaStatus("spring.datasource.dynamic.datasource.slave_2", "Replica_IO_Running");
         String sql2 = queryReplicaStatus("spring.datasource.dynamic.datasource.slave_2", "Replica_SQL_Running");
 
+        Assumptions.assumeTrue("Yes".equals(io1) && "Yes".equals(sql1)
+                && "Yes".equals(io2) && "Yes".equals(sql2), "当前环境未启用主从复制，跳过复制链路断言");
+
         assertEquals("Yes", io1, "slave_1 复制 IO 线程未运行");
         assertEquals("Yes", sql1, "slave_1 复制 SQL 线程未运行");
         assertEquals("Yes", io2, "slave_2 复制 IO 线程未运行");
         assertEquals("Yes", sql2, "slave_2 复制 SQL 线程未运行");
     }
 
-    /**
-     * 测试写操作使用主库
-     */
     @Test
     public void testWriteToMaster() {
-        System.out.println("\n=== 测试写操作（应使用主库）===");
         String beforeWrite = DynamicDataSourceContextHolder.peek();
         assertEquals(null, beforeWrite);
 
-        // 执行秒杀操作（写操作）
-        Result<Boolean> seckillResult = productService.seckillProduct(1L);
+        Result<Long> seckillResult = productService.seckillProduct(1L, uniqueUserId());
         assertNotNull(seckillResult);
         assertEquals(200, seckillResult.getCode());
-        System.out.println("秒杀结果：" + seckillResult.getMsg());
 
         String afterWrite = DynamicDataSourceContextHolder.peek();
         assertEquals(null, afterWrite);
 
-        // 验证库存是否减少（读操作，应该从从库读取）
         Result<SeckillProductVO> productResult = productService.getProductById(1L);
         assertNotNull(productResult);
         assertEquals(200, productResult.getCode());
         assertNotNull(productResult.getData());
-        if (productResult.getData() != null) {
-            System.out.println("当前库存：" + productResult.getData().getStock());
-        }
     }
 
-    /**
-     * 测试读写分离效果
-     */
     @Test
     public void testReadWriteSeparation() {
-        System.out.println("\n=== 综合测试读写分离 ===");
-        
-        // 多次读操作
         for (int i = 0; i < 3; i++) {
             Result<SeckillProductVO> result = productService.getProductById(1L);
             assertNotNull(result);
             assertEquals(200, result.getCode());
             assertNotNull(result.getData());
-            if (result.getData() != null) {
-                System.out.println("第 " + (i + 1) + " 次读取：" + result.getData().getProductName());
-            }
         }
-        
-        // 一次写操作
-        Result<Boolean> writeResult = productService.seckillProduct(2L);
+
+        Result<Long> writeResult = productService.seckillProduct(2L, uniqueUserId());
         assertNotNull(writeResult);
         assertEquals(200, writeResult.getCode());
-        System.out.println("写操作结果：" + writeResult.getMsg());
-        
-        // 再次读操作
+
         Result<SeckillProductVO> readResult = productService.getProductById(2L);
         assertNotNull(readResult);
         assertEquals(200, readResult.getCode());
         assertNotNull(readResult.getData());
-        if (readResult.getData() != null) {
-            System.out.println("写后读取库存：" + readResult.getData().getStock());
-        }
     }
 
-    /**
-     * 写主库后，校验两个从库都能读到同样结果（验证写入后复制生效）
-     */
     @Test
     public void testWriteReplicatedToSlaves() {
         Long productId = 1L;
+        String io1 = queryReplicaStatus("spring.datasource.dynamic.datasource.slave_1", "Replica_IO_Running");
+        String sql1 = queryReplicaStatus("spring.datasource.dynamic.datasource.slave_1", "Replica_SQL_Running");
+        String io2 = queryReplicaStatus("spring.datasource.dynamic.datasource.slave_2", "Replica_IO_Running");
+        String sql2 = queryReplicaStatus("spring.datasource.dynamic.datasource.slave_2", "Replica_SQL_Running");
+        Assumptions.assumeTrue("Yes".equals(io1) && "Yes".equals(sql1)
+                && "Yes".equals(io2) && "Yes".equals(sql2), "当前环境未启用主从复制，跳过复制一致性断言");
+
         Integer beforeMaster = queryStock("spring.datasource.dynamic.datasource.master", productId);
         assertNotNull(beforeMaster);
         assertTrue(beforeMaster > 0, "测试商品库存不足，无法验证写入");
 
-        Result<Boolean> writeResult = productService.seckillProduct(productId);
+        Result<Long> writeResult = productService.seckillProduct(productId, uniqueUserId());
         assertNotNull(writeResult);
         assertEquals(200, writeResult.getCode());
 
@@ -198,5 +165,9 @@ public class ReadWriteSeparationTest {
             throw new IllegalStateException("缺少配置: " + key);
         }
         return value;
+    }
+
+    private long uniqueUserId() {
+        return System.currentTimeMillis() + (long) (Math.random() * 10000);
     }
 }

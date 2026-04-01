@@ -5,12 +5,14 @@ import com.seckill.service.support.OrderProgressService;
 import com.seckill.service.support.SeckillReservationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "seckill.kafka.enabled", havingValue = "true")
 public class OrderCreateConsumer {
 
     private final OrderService orderService;
@@ -30,13 +32,13 @@ public class OrderCreateConsumer {
                         message.getOrderId(), message.getUserId(), message.getProductId());
             }
             case DUPLICATE -> {
-                orderProgressService.markFailed(message.getOrderId(), "重复下单，请勿重复提交");
+                orderProgressService.markFailed(message.getOrderId(), message.getUserId(), "重复下单，请勿重复提交");
                 log.info("幂等命中，重复下单请求被忽略: userId={}, productId={}",
                         message.getUserId(), message.getProductId());
             }
             case SOLD_OUT, PRODUCT_NOT_FOUND -> {
                 seckillReservationService.release(message.getProductId(), message.getUserId());
-                orderProgressService.markFailed(message.getOrderId(), "库存不足或商品不存在");
+                orderProgressService.markFailed(message.getOrderId(), message.getUserId(), "库存不足或商品不存在");
                 log.warn("订单创建失败并已回补Redis库存: orderId={}, result={}", message.getOrderId(), result);
             }
             default -> throw new IllegalStateException("未知订单创建结果: " + result);

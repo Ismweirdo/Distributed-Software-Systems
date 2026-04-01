@@ -91,7 +91,7 @@ public class SeckillProductServiceImpl extends ServiceImpl<SeckillProductMapper,
         message.setUserId(userId);
         message.setProductId(productId);
         message.setCreateTime(LocalDateTime.now());
-        orderProgressService.markPending(orderId);
+        orderProgressService.markPending(orderId, userId);
 
         boolean sent = orderCreateProducer.send(message);
         if (!sent) {
@@ -115,7 +115,7 @@ public class SeckillProductServiceImpl extends ServiceImpl<SeckillProductMapper,
                 || syncResult == OrderService.OrderCreateResult.PRODUCT_NOT_FOUND) {
             seckillReservationService.release(productId, userId);
         }
-        orderProgressService.markFailed(orderId, "下单失败，请重试");
+        orderProgressService.markFailed(orderId, userId, "下单失败，请重试");
         return Result.fail("下单失败，请重试");
     }
 

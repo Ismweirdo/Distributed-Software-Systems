@@ -7,7 +7,6 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.math.BigDecimal;
-// Store times as formatted strings in ES to avoid conversion issues during tests
 
 /**
  * 商品 ES 文档实体
@@ -41,5 +40,5 @@ public class SeckillProductDocument {
     private String endTime;
 
     @Field(type = FieldType.Keyword)
-    private String status; // 秒杀状态：UPCOMING(即将开始), ONGOING(进行中), ENDED(已结束)
+    private String status;
 }

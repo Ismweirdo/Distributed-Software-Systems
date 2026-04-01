@@ -4,1068 +4,350 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>秒杀商城 - 商品列表</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/js/app-shell.js"></script>
     <style>
-        :root {
-            --bg: #f3f6fb;
-            --card: #ffffff;
-            --line: #e3e8f1;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --primary: #2563eb;
-            --primary-strong: #1d4ed8;
-            --success: #16a34a;
-            --warning: #d97706;
-            --danger: #dc2626;
-            --radius: 14px;
-            --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-            color: var(--text);
-            background: var(--bg);
-        }
-
-        .page {
-            width: min(1120px, calc(100% - 32px));
-            margin: 0 auto;
-            padding: 24px 0 32px;
-        }
-
-        .hero {
-            padding: 18px;
-            border-radius: var(--radius);
-            border: 1px solid var(--line);
-            background: var(--card);
-            box-shadow: var(--shadow);
-        }
-
-        .hero-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .hero h1 {
-            margin: 0;
-            font-size: clamp(1.6rem, 2.8vw, 2.3rem);
-            line-height: 1.2;
-        }
-
-        .hero p {
-            margin: 8px 0 0;
-            color: var(--muted);
-            line-height: 1.7;
-            max-width: 46rem;
-            font-size: 14px;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid transparent;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            color: #fff;
-            background: var(--primary);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-strong);
-        }
-
-        .btn-secondary {
-            color: #374151;
-            background: #fff;
-            border-color: #d1d5db;
-        }
-
-        .summary {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .summary-card {
-            padding: 12px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-        }
-
-        .summary-card span {
-            display: block;
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 6px;
-        }
-
-        .summary-card strong {
-            font-size: 1.2rem;
-        }
-
-        .toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin: 14px 0 12px;
-            flex-wrap: wrap;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .filter-chip {
-            padding: 8px 12px;
-            border-radius: 999px;
-            border: 1px solid #d1d5db;
-            background: #fff;
-            color: #4b5563;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .filter-chip.active {
-            background: #eaf1ff;
-            border-color: #93c5fd;
-            color: #1e40af;
-        }
-
-        .status-line {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .message {
-            margin-bottom: 10px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            display: none;
-            line-height: 1.6;
-            font-size: 13px;
-        }
-
-        .message.show {
-            display: block;
-        }
-
-        .message.info {
-            background: #eff6ff;
-            border: 1px solid #93c5fd;
-            color: #1e3a8a;
-        }
-
-        .message.error {
-            background: #fef2f2;
-            border: 1px solid #fca5a5;
-            color: #991b1b;
-        }
-
-        .search-panel {
-            margin: 12px 0;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--line);
-            background: var(--card);
-            box-shadow: var(--shadow);
-        }
-
-        .search-title {
-            margin: 0 0 10px;
-            font-size: 1rem;
-        }
-
-        .search-grid {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr 1fr auto auto;
-            gap: 8px;
-        }
-
-        .search-tip {
-            margin-top: 8px;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .search-input,
-        .search-select {
-            width: 100%;
-            padding: 9px 10px;
-            border-radius: 10px;
-            border: 1px solid #d1d5db;
-            background: #fff;
-            color: #1f2937;
-        }
-
-        .products {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 12px;
-        }
-
-        .product-card {
-            padding: 14px;
-            border-radius: 12px;
-            background: var(--card);
-            border: 1px solid var(--line);
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-height: 320px;
-        }
-
-        .card-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 8px;
-            align-items: flex-start;
-        }
-
-        .product-name {
-            margin: 0;
-            font-size: 1.05rem;
-            line-height: 1.4;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .badge.upcoming {
-            background: #fffbeb;
-            color: #92400e;
-        }
-
-        .badge.active {
-            background: #ecfdf3;
-            color: #166534;
-        }
-
-        .badge.ended,
-        .badge.soldout {
-            background: #fef2f2;
-            color: #991b1b;
-        }
-
-        .description {
-            margin: 0;
-            color: var(--muted);
-            line-height: 1.6;
-            min-height: 56px;
-            font-size: 14px;
-        }
-
-        .price-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .price-current {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: #111827;
-        }
-
-        .price-origin {
-            color: #9ca3af;
-            text-decoration: line-through;
-            font-size: 14px;
-        }
-
-        .discount {
-            padding: 3px 8px;
-            border-radius: 999px;
-            background: #eaf1ff;
-            color: #1e40af;
-            font-size: 12px;
-        }
-
-        .meta {
-            display: grid;
-            gap: 6px;
-        }
-
-        .meta-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: #374151;
-        }
-
-        .meta-row span:last-child {
-            color: var(--muted);
-            text-align: right;
-        }
-
-        .progress {
-            height: 8px;
-            border-radius: 999px;
-            background: #e5e7eb;
-            overflow: hidden;
-        }
-
-        .progress > div {
-            height: 100%;
-            border-radius: inherit;
-            background: #16a34a;
-        }
-
-        .progress.warning > div {
-            background: var(--warning);
-        }
-
-        .progress.danger > div {
-            background: var(--danger);
-        }
-
-        .countdown {
-            padding: 8px 10px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-            color: #374151;
-            line-height: 1.6;
-            font-size: 13px;
-        }
-
-        .countdown strong {
-            color: #111827;
-        }
-
-        .action {
-            margin-top: auto;
-        }
-
-        .seckill-btn {
-            width: 100%;
-            padding: 11px 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            color: #fff;
-            background: var(--primary);
-            cursor: pointer;
-        }
-
-        .seckill-btn:hover:not(:disabled) {
-            background: var(--primary-strong);
-        }
-
-        .seckill-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .empty {
-            padding: 20px 16px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid var(--line);
-            background: var(--card);
-            color: var(--muted);
-        }
-
-        @media (max-width: 900px) {
-            .summary {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 700px) {
-            .summary {
-                grid-template-columns: 1fr;
-            }
-            .hero-top {
-                flex-direction: column;
-            }
-            .btn {
-                width: 100%;
-            }
-            .search-grid {
-                grid-template-columns: 1fr;
-            }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: linear-gradient(180deg, #f3f6ff, #f9fffb); color: #111827; }
+        .page { width: min(1180px, calc(100% - 26px)); margin: 14px auto 24px; display: grid; gap: 12px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 8px 22px rgba(15, 23, 42, .05); padding: 14px; }
+        .row { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .btn { border: 0; border-radius: 10px; padding: 9px 13px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .btn.primary { background: #2563eb; color: #fff; }
+        .btn.soft { background: #eef2ff; color: #1d4ed8; }
+        .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+        .summary > div { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px; }
+        .summary strong { font-size: 1.2rem; }
+        .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { border: 1px solid #d1d5db; border-radius: 999px; background: #fff; padding: 6px 12px; cursor: pointer; }
+        .chip.active { background: #e0ecff; border-color: #c7dbff; color: #1d4ed8; }
+        .search { display: grid; grid-template-columns: 150px 1fr 1fr auto auto; gap: 8px; }
+        .input, .select { width: 100%; border: 1px solid #d1d5db; border-radius: 10px; padding: 9px 11px; }
+        .message { border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+        .message.info { background: #eff6ff; color: #1e40af; }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .message.success { background: #dcfce7; color: #166534; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+        .item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; display: grid; gap: 8px; transition: transform .2s ease, box-shadow .2s ease; animation: uiFadeUp .35s ease both; }
+        .item:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(15, 23, 42, .10); }
+        .top { display: flex; justify-content: space-between; gap: 8px; }
+        .badge { border-radius: 999px; padding: 2px 9px; font-size: 12px; }
+        .active { background: #dcfce7; color: #166534; animation: uiPulse 2.1s ease-in-out infinite; }
+        .upcoming { background: #fef3c7; color: #92400e; }
+        .soldout, .ended { background: #fee2e2; color: #991b1b; }
+        .price { font-size: 1.35rem; font-weight: 800; color: #111827; }
+        .muted { color: #6b7280; font-size: 13px; }
+        .desc { color: #4b5563; font-size: 14px; min-height: 46px; }
+        .meta-primary { display: flex; flex-wrap: wrap; gap: 6px; }
+        .meta-pill { background: #f3f4f6; color: #334155; border-radius: 999px; padding: 4px 9px; font-size: 12px; }
+        .meta-secondary { color: #6b7280; font-size: 12px; }
+        .stock { height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+        .stock > div { height: 100%; background: #16a34a; transition: width .6s ease; }
+        .empty { text-align: center; color: #6b7280; padding: 20px; }
+        @media (max-width: 900px) { .summary { grid-template-columns: repeat(2, 1fr); } .search { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { .summary { grid-template-columns: 1fr; } }
+        @media (max-width: 760px) {
+            .page { width: calc(100% - 14px); margin: 8px auto 14px; gap: 10px; }
+            .card { padding: 12px; }
+            .row .btn { width: 100%; text-align: center; }
+            .filters { width: 100%; }
+            .chip { flex: 1; text-align: center; }
+            .item { padding: 10px; gap: 6px; }
+            .desc { display: none; }
+            .meta-secondary { display: none; }
+            .price { font-size: 1.2rem; }
+            .btn.primary { padding: 10px; }
         }
     </style>
 </head>
-<body>
-<main class="page">
-    <section class="hero">
-        <div class="hero-top">
+<body class="ui-compact ui-motion">
+<div id="app" class="page">
+    <top-nav active="products" :username="username"></top-nav>
+
+    <section class="card fx-enter" style="--enter-delay: 30ms;">
+        <div class="row">
             <div>
-                <h1>当前秒杀商品一览</h1>
-                <p>商品卡片会自动识别未开始、进行中、已结束和已售罄状态，并根据状态调整按钮和提示文案。点击抢购后会立即刷新列表。</p>
+                <h1 style="margin:0;font-size:1.6rem;">秒杀专区</h1>
+                <div class="muted" style="margin-top:6px;">查看库存、活动状态并下单。</div>
             </div>
-            <div class="hero-actions">
-                <a class="btn btn-secondary" href="/main.html">返回主页</a>
-                <a class="btn btn-secondary" href="/orders.html">我的订单</a>
-                <button id="refresh-btn" class="btn btn-primary" type="button">刷新商品列表</button>
+            <div class="row">
+                <a class="btn soft" href="/main.html">控制台</a>
+                <a class="btn soft" href="/orders.html">我的订单</a>
+                <button class="btn primary" @click="loadProducts" :disabled="loading">{{ loading ? "刷新中..." : "刷新商品" }}</button>
             </div>
         </div>
-
         <div class="summary">
-            <div class="summary-card">
-                <span>商品总数</span>
-                <strong id="summary-total">0</strong>
-            </div>
-            <div class="summary-card">
-                <span>进行中活动</span>
-                <strong id="summary-active">0</strong>
-            </div>
-            <div class="summary-card">
-                <span>即将开始</span>
-                <strong id="summary-upcoming">0</strong>
-            </div>
-            <div class="summary-card">
-                <span>已售罄</span>
-                <strong id="summary-soldout">0</strong>
-            </div>
+            <div><div class="muted">在售商品</div><strong>{{ summary.total }}</strong></div>
+            <div><div class="muted">进行中</div><strong>{{ summary.active }}</strong></div>
+            <div><div class="muted">即将开始</div><strong>{{ summary.upcoming }}</strong></div>
+            <div><div class="muted">已售罄</div><strong>{{ summary.soldout }}</strong></div>
         </div>
     </section>
 
-    <section class="toolbar">
-        <div class="filter-bar">
-            <button class="filter-chip active" data-filter="all" type="button">全部</button>
-            <button class="filter-chip" data-filter="active" type="button">进行中</button>
-            <button class="filter-chip" data-filter="upcoming" type="button">即将开始</button>
-            <button class="filter-chip" data-filter="soldout" type="button">已售罄</button>
-            <button class="filter-chip" data-filter="ended" type="button">已结束</button>
+    <section class="card fx-enter" style="--enter-delay: 90ms;">
+        <div class="row">
+            <div class="filters">
+                <button v-for="f in filters" :key="f.key" class="chip" :class="{active: activeFilter === f.key}" @click="activeFilter = f.key">{{ f.text }}</button>
+            </div>
+            <div class="muted">共 {{ products.length }} 个商品，当前显示 {{ filteredProducts.length }} 个</div>
         </div>
-        <div class="status-line" id="status-line">准备加载商品数据...</div>
     </section>
 
-    <section class="search-panel">
-        <h2 class="search-title">搜索（对接后端 `/api/search/*`）</h2>
-        <div class="search-grid">
-            <select id="search-mode" class="search-select">
-                <option value="keyword">关键词</option>
-                <option value="name">名称</option>
+    <section class="card fx-enter" style="--enter-delay: 130ms;">
+        <div class="search">
+            <select class="select" v-model="searchMode">
+                <option value="keyword">综合搜索</option>
+                <option value="name">商品名称</option>
                 <option value="price">价格区间</option>
             </select>
-            <input id="search-input-a" class="search-input" type="text" placeholder="关键词或名称，例如 iPhone">
-            <input id="search-input-b" class="search-input" type="text" placeholder="价格模式下填最大价格，例如 5000">
-            <button id="search-btn" class="btn btn-primary" type="button">搜索</button>
-            <button id="reset-search-btn" class="btn btn-secondary" type="button">返回全部</button>
+            <input class="input" v-model.trim="searchA" :placeholder="searchPlaceholderA">
+            <input class="input" v-model.trim="searchB" :placeholder="searchPlaceholderB" :disabled="searchMode !== 'price'">
+            <button class="btn primary" @click="searchProducts" :disabled="searching">{{ searching ? "搜索中..." : "搜索" }}</button>
+            <button class="btn soft" @click="resetSearch">重置</button>
         </div>
-        <div id="search-mode-tip" class="search-tip">关键词模式：输入商品名称或描述片段。</div>
     </section>
 
-    <div id="page-message" class="message" role="status" aria-live="polite"></div>
-    <section id="product-container" class="products"></section>
-</main>
+    <section v-if="message" :class="['message', message.type]">{{ message.text }}</section>
+
+    <section class="grid">
+        <article v-for="p in filteredProducts" :key="p.id" class="item">
+            <div class="top">
+                <strong>{{ p.productName || '未命名商品' }}</strong>
+                <span :class="['badge', statusOf(p).key]">{{ statusOf(p).label }}</span>
+            </div>
+            <div class="desc">{{ p.description || '暂无描述' }}</div>
+            <div>
+                <span class="price">¥{{ money(p.seckillPrice) }}</span>
+                <span class="muted" style="text-decoration:line-through;margin-left:8px;">¥{{ money(p.originalPrice) }}</span>
+            </div>
+            <div class="meta-primary">
+                <span class="meta-pill">库存 {{ p.stock }}</span>
+                <span class="meta-pill">{{ countdownText(p) }}</span>
+            </div>
+            <div class="meta-secondary">活动开始: {{ dateText(p.startTime) }}</div>
+            <div class="stock"><div :style="{ width: Math.min(100, Number(p.stock || 0)) + '%' }"></div></div>
+            <button class="btn primary" :disabled="seckillLoading || statusOf(p).key !== 'active'" @click="seckill(p)">
+                {{ statusOf(p).key === 'active' ? '立即秒杀' : statusOf(p).label }}
+            </button>
+        </article>
+        <div v-if="!filteredProducts.length" class="empty">暂无符合条件的商品</div>
+    </section>
+</div>
 
 <script>
-    const API_BASE = "/api/products";
-    const SEARCH_BASE = "/api/search";
-    const ORDER_BASE = "/api/orders";
-    const STORAGE_KEYS = {
-        username: "seckill_username",
-        token: "seckill_login_token"
-    };
-
-    const productContainer = document.getElementById("product-container");
-    const pageMessage = document.getElementById("page-message");
-    const statusLine = document.getElementById("status-line");
-    const refreshButton = document.getElementById("refresh-btn");
-    const searchButton = document.getElementById("search-btn");
-    const resetSearchButton = document.getElementById("reset-search-btn");
-    const searchMode = document.getElementById("search-mode");
-    const searchInputA = document.getElementById("search-input-a");
-    const searchInputB = document.getElementById("search-input-b");
-    const filterButtons = Array.from(document.querySelectorAll(".filter-chip"));
-    const searchModeTip = document.getElementById("search-mode-tip");
-    const summaryNodes = {
-        total: document.getElementById("summary-total"),
-        active: document.getElementById("summary-active"),
-        upcoming: document.getElementById("summary-upcoming"),
-        soldout: document.getElementById("summary-soldout")
-    };
-
-    let allProducts = [];
-    let activeFilter = "all";
-    let countdownTimer = null;
-    let seckillInFlight = false;
-    let currentView = "list";
-
-    const UI_TEXT = {
-        queueing: "订单排队中",
-        orderQueryFailed: "查询订单状态失败",
-        orderPendingTimeout: "下单处理中，请稍后到“我的订单”查看",
-        loadFailed: "加载商品失败",
-        searchInputRequired: "请输入搜索条件",
-        rangeSwapped: "已自动纠正价格区间",
-        searchDone: "搜索完成",
-        searchFallback: "搜索服务不可用，已切本地匹配",
-        productMissing: "商品未找到，请刷新后重试",
-        productNotActive: "当前商品不可秒杀",
-        submitting: "正在提交请求...",
-        accepted: "请求已受理，订单排队中",
-        created: "下单成功，订单已创建",
-        failed: "下单失败",
-        seckillRequestFailed: "请求失败，请检查服务状态"
-    };
-
-    function notify(type, text) {
-        showPageMessage(type, text);
-    }
-
-    async function pollOrderStatus(orderId, maxAttempts = 8, intervalMs = 1000) {
-        for (let i = 0; i < maxAttempts; i++) {
-            const response = await fetch(ORDER_BASE + "/" + encodeURIComponent(orderId));
-            const result = await response.json();
-            if (result.code !== 200 || !result.data) {
-                throw new Error(result.msg || UI_TEXT.orderQueryFailed);
-            }
-
-            const status = result.data.status;
-            const message = result.data.message || "";
-            if (status === "CREATED") {
-                return { status, message };
-            }
-            if (status === "FAILED") {
-                return { status, message };
-            }
-
-            notify("info", UI_TEXT.queueing + "（" + (i + 1) + "/" + maxAttempts + "）" + (message ? "：" + message : ""));
-            await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
-        }
-        return { status: "TIMEOUT", message: UI_TEXT.orderPendingTimeout };
-    }
-
-    function getUserId() {
-        const token = localStorage.getItem(STORAGE_KEYS.token);
-        if (token && token.startsWith("login_success_")) {
-            return token.replace("login_success_", "");
-        }
-        return "1";
-    }
-
-    function updateSearchFormByMode() {
-        const mode = searchMode.value;
-        if (mode === "keyword") {
-            searchInputA.type = "text";
-            searchInputA.placeholder = "关键词，例如 iPhone 或 苹果";
-            searchInputB.value = "";
-            searchInputB.disabled = true;
-            searchInputB.placeholder = "关键词模式下无需填写";
-            searchModeTip.textContent = "关键词模式：按商品名称 + 描述匹配。";
-            return;
-        }
-
-        if (mode === "name") {
-            searchInputA.type = "text";
-            searchInputA.placeholder = "商品名称，例如 iPhone";
-            searchInputB.value = "";
-            searchInputB.disabled = true;
-            searchInputB.placeholder = "名称模式下无需填写";
-            searchModeTip.textContent = "名称模式：仅按商品名称匹配。";
-            return;
-        }
-
-        searchInputA.type = "number";
-        searchInputA.min = "0";
-        searchInputA.step = "0.01";
-        searchInputA.placeholder = "最小价格，例如 1000";
-        searchInputB.disabled = false;
-        searchInputB.type = "number";
-        searchInputB.min = "0";
-        searchInputB.step = "0.01";
-        searchInputB.placeholder = "最大价格，例如 5000";
-        searchModeTip.textContent = "价格模式：请输入最小价和最大价，若反向输入将自动纠正。";
-    }
-
-    function parsePrice(value) {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : null;
-    }
-
-    function showPageMessage(type, text) {
-        pageMessage.textContent = text;
-        pageMessage.className = "message show " + type;
-    }
-
-    function clearPageMessage() {
-        pageMessage.textContent = "";
-        pageMessage.className = "message";
-    }
-
-    function parseDate(value) {
-        if (!value) {
-            return null;
-        }
-        const normalized = String(value).replace(" ", "T");
-        const date = new Date(normalized);
-        return Number.isNaN(date.getTime()) ? null : date;
-    }
-
-    function formatDateTime(value) {
-        const date = parseDate(value);
-        if (!date) {
-            return "--";
-        }
-        return date.toLocaleString("zh-CN", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit"
-        });
-    }
-
-    function formatMoney(value) {
-        const amount = Number(value || 0);
-        return amount.toFixed(2);
-    }
-
-    function getProductStatus(product, now = new Date()) {
-        const stock = Number(product.stock || 0);
-        const startTime = parseDate(product.startTime);
-        const endTime = parseDate(product.endTime);
-
-        if (stock <= 0) {
-            return { key: "soldout", label: "已售罄" };
-        }
-        if (startTime && now < startTime) {
-            return { key: "upcoming", label: "即将开始" };
-        }
-        if (endTime && now > endTime) {
-            return { key: "ended", label: "已结束" };
-        }
-        return { key: "active", label: "进行中" };
-    }
-
-    function getCountdownText(product, now = new Date()) {
-        const status = getProductStatus(product, now);
-        const startTime = parseDate(product.startTime);
-        const endTime = parseDate(product.endTime);
-
-        if (status.key === "upcoming" && startTime) {
-            return "距离开始还有 " + formatDuration(startTime - now);
-        }
-        if (status.key === "active" && endTime) {
-            return "距离结束还有 " + formatDuration(endTime - now);
-        }
-        if (status.key === "soldout") {
-            return "商品库存已售空，可刷新查看是否有补货。";
-        }
-        return "当前活动已结束，请关注下一场秒杀。";
-    }
-
-    function formatDuration(ms) {
-        const safeMs = Math.max(0, ms);
-        const totalSeconds = Math.floor(safeMs / 1000);
-        const days = Math.floor(totalSeconds / 86400);
-        const hours = Math.floor((totalSeconds % 86400) / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        const parts = [];
-        if (days > 0) {
-            parts.push(days + "天");
-        }
-        if (hours > 0 || days > 0) {
-            parts.push(String(hours).padStart(2, "0") + "时");
-        }
-        parts.push(String(minutes).padStart(2, "0") + "分");
-        parts.push(String(seconds).padStart(2, "0") + "秒");
-        return parts.join("");
-    }
-
-    function getDiscount(product) {
-        const original = Number(product.originalPrice || 0);
-        const current = Number(product.seckillPrice || 0);
-        if (!original || original <= 0) {
-            return "限时价";
-        }
-        const discount = ((current / original) * 10).toFixed(1);
-        return discount + " 折";
-    }
-
-    function getStockProgressClass(stock) {
-        const value = Number(stock || 0);
-        if (value <= 0) {
-            return "danger";
-        }
-        if (value < 20) {
-            return "warning";
-        }
-        return "";
-    }
-
-    function updateSummary(products) {
-        const counters = {
-            total: products.length,
-            active: 0,
-            upcoming: 0,
-            soldout: 0
-        };
-
-        products.forEach((product) => {
-            const status = getProductStatus(product).key;
-            if (status === "active") counters.active += 1;
-            if (status === "upcoming") counters.upcoming += 1;
-            if (status === "soldout") counters.soldout += 1;
-        });
-
-        summaryNodes.total.textContent = String(counters.total);
-        summaryNodes.active.textContent = String(counters.active);
-        summaryNodes.upcoming.textContent = String(counters.upcoming);
-        summaryNodes.soldout.textContent = String(counters.soldout);
-    }
-
-    function getFilteredProducts() {
-        if (activeFilter === "all") {
-            return allProducts;
-        }
-        return allProducts.filter((product) => getProductStatus(product).key === activeFilter);
-    }
-
-    function renderProducts() {
-        const products = getFilteredProducts();
-        statusLine.textContent = "共 " + allProducts.length + " 个商品，当前筛选显示 " + products.length + " 个。";
-
-        if (!products.length) {
-            productContainer.innerHTML = '<div class="empty">当前筛选条件下没有商品，换个状态看看或者稍后刷新。</div>';
-            return;
-        }
-
-        const now = new Date();
-        productContainer.innerHTML = products.map((product) => {
-            const status = getProductStatus(product, now);
-            const stock = Number(product.stock || 0);
-            const progressWidth = Math.max(0, Math.min(100, stock));
-            const progressClass = getStockProgressClass(stock);
-            const disabled = seckillInFlight || status.key !== "active";
-            const buttonTextMap = {
-                active: "立即秒杀",
-                upcoming: "尚未开始",
-                ended: "活动结束",
-                soldout: "已售罄"
+    const { createApp } = Vue;
+    createApp({
+        components: {
+            TopNav: SeckillUi.TopNav
+        },
+        data() {
+            return {
+                username: "",
+                products: [],
+                activeFilter: "all",
+                loading: false,
+                searching: false,
+                seckillLoading: false,
+                searchMode: "keyword",
+                searchA: "",
+                searchB: "",
+                message: null,
+                filters: [
+                    { key: "all", text: "全部" },
+                    { key: "active", text: "进行中" },
+                    { key: "upcoming", text: "即将开始" },
+                    { key: "soldout", text: "已售罄" },
+                    { key: "ended", text: "已结束" }
+                ]
             };
-
-            return `
-                <article class="product-card">
-                    <div class="card-top">
-                        <h2 class="product-name">${escapeHtml(product.productName || "未命名商品")}</h2>
-                        <span class="badge ${status.key}">${status.label}</span>
-                    </div>
-                    <p class="description">${escapeHtml(product.description || "暂无商品描述。")}</p>
-                    <div class="price-row">
-                        <span class="price-current">¥${formatMoney(product.seckillPrice)}</span>
-                        <span class="price-origin">原价 ¥${formatMoney(product.originalPrice)}</span>
-                        <span class="discount">${getDiscount(product)}</span>
-                    </div>
-                    <div class="meta">
-                        <div class="meta-row">
-                            <span>活动开始</span>
-                            <span>${formatDateTime(product.startTime)}</span>
-                        </div>
-                        <div class="meta-row">
-                            <span>活动结束</span>
-                            <span>${formatDateTime(product.endTime)}</span>
-                        </div>
-                        <div class="meta-row">
-                            <span>剩余库存</span>
-                            <span>${stock} 件</span>
-                        </div>
-                    </div>
-                    <div class="progress ${progressClass}">
-                        <div style="width: ${progressWidth}%;"></div>
-                    </div>
-                    <div class="countdown"><strong>${status.label}</strong>，${getCountdownText(product, now)}</div>
-                    <div class="action">
-                        <button class="seckill-btn" type="button" data-product-id="${product.id}" ${disabled ? "disabled" : ""}>
-                            ${buttonTextMap[status.key]}
-                        </button>
-                    </div>
-                </article>
-            `;
-        }).join("");
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function renderSearchDocuments(content) {
-        currentView = "search";
-        if (!Array.isArray(content) || !content.length) {
-            productContainer.innerHTML = '<div class="empty">搜索无结果，请更换关键词或条件。</div>';
-            statusLine.textContent = "搜索结果 0 条。";
-            return;
-        }
-        statusLine.textContent = "搜索结果 " + content.length + " 条。";
-        productContainer.innerHTML = content.map((doc) => `
-            <article class="product-card">
-                <div class="card-top">
-                    <h2 class="product-name">${escapeHtml(doc.productName || "未命名商品")}</h2>
-                    <span class="badge active">搜索结果</span>
-                </div>
-                <p class="description">${escapeHtml(doc.description || "暂无描述")}</p>
-                <div class="price-row">
-                    <span class="price-current">¥${formatMoney(doc.seckillPrice)}</span>
-                    <span class="price-origin">原价 ¥${formatMoney(doc.originalPrice)}</span>
-                </div>
-                <div class="meta">
-                    <div class="meta-row"><span>库存</span><span>${Number(doc.stock || 0)} 件</span></div>
-                    <div class="meta-row"><span>活动开始</span><span>${formatDateTime(doc.startTime)}</span></div>
-                </div>
-            </article>
-        `).join("");
-    }
-
-    function fallbackSearchByList(mode, a, b) {
-        const keyword = a.toLowerCase();
-        if (mode === "keyword") {
-            return allProducts.filter((p) =>
-                String(p.productName || "").toLowerCase().includes(keyword) ||
-                String(p.description || "").toLowerCase().includes(keyword)
-            );
-        }
-        if (mode === "name") {
-            return allProducts.filter((p) =>
-                String(p.productName || "").toLowerCase().includes(keyword)
-            );
-        }
-        const min = Number(a);
-        const max = Number(b);
-        return allProducts.filter((p) => {
-            const price = Number(p.seckillPrice || 0);
-            return price >= min && price <= max;
-        });
-    }
-
-    function setActiveFilter(filter) {
-        currentView = "list";
-        activeFilter = filter;
-        filterButtons.forEach((button) => {
-            button.classList.toggle("active", button.dataset.filter === filter);
-        });
-        renderProducts();
-    }
-
-    async function fetchProducts() {
-        currentView = "list";
-        refreshButton.disabled = true;
-        refreshButton.textContent = "刷新中...";
-        statusLine.textContent = "正在从服务端加载商品数据...";
-        clearPageMessage();
-
-        try {
-            const response = await fetch(API_BASE + "/list");
-            const result = await response.json();
-
-            if (result.code !== 200 || !Array.isArray(result.data)) {
-                throw new Error(result.msg || "商品列表返回异常。");
+        },
+        computed: {
+            filteredProducts() {
+                if (this.activeFilter === "all") return this.products;
+                return this.products.filter((p) => this.statusOf(p).key === this.activeFilter);
+            },
+            summary() {
+                const result = { total: this.products.length, active: 0, upcoming: 0, soldout: 0 };
+                this.products.forEach((p) => {
+                    const k = this.statusOf(p).key;
+                    if (k === "active") result.active += 1;
+                    if (k === "upcoming") result.upcoming += 1;
+                    if (k === "soldout") result.soldout += 1;
+                });
+                return result;
+            },
+            searchPlaceholderA() {
+                if (this.searchMode === "name") return "输入商品名称，如 iPhone";
+                if (this.searchMode === "price") return "最低价格";
+                return "输入关键词，如 苹果";
+            },
+            searchPlaceholderB() {
+                return this.searchMode === "price" ? "最高价格" : "非价格模式无需填写";
             }
-
-            allProducts = result.data;
-            updateSummary(allProducts);
-            renderProducts();
-            statusLine.textContent = "商品数据已更新，倒计时会自动刷新。";
-        } catch (error) {
-            productContainer.innerHTML = '<div class="empty">商品加载失败，请稍后重试。</div>';
-            notify("error", UI_TEXT.loadFailed + "：" + (error.message || "请稍后重试"));
-            statusLine.textContent = "商品数据加载失败。";
-            console.error("load products failed", error);
-        } finally {
-            refreshButton.disabled = false;
-            refreshButton.textContent = "刷新商品列表";
-        }
-    }
-
-    async function searchProducts() {
-        const mode = searchMode.value;
-        const a = searchInputA.value.trim();
-        const b = searchInputB.value.trim();
-        if (!a) {
-            notify("error", UI_TEXT.searchInputRequired);
-            return;
-        }
-        searchButton.disabled = true;
-        searchButton.textContent = "搜索中...";
-        try {
-            let url = "";
-            if (mode === "keyword") {
-                url = SEARCH_BASE + "/keyword?keyword=" + encodeURIComponent(a) + "&page=0&size=10";
-            } else if (mode === "name") {
-                url = SEARCH_BASE + "/name?name=" + encodeURIComponent(a) + "&page=0&size=10";
-            } else {
-                const minPrice = parsePrice(a);
-                const maxPrice = parsePrice(b);
-                if (!b || minPrice === null || maxPrice === null) {
-                    throw new Error("价格区间模式需要填写最小价格和最大价格数字。");
+        },
+        methods: {
+            parseDate(value) {
+                if (!value) return null;
+                const d = new Date(String(value).replace(" ", "T"));
+                return Number.isNaN(d.getTime()) ? null : d;
+            },
+            money(v) { return Number(v || 0).toFixed(2); },
+            dateText(v) {
+                const d = this.parseDate(v);
+                return d ? d.toLocaleString("zh-CN") : "--";
+            },
+            duration(ms) {
+                const sec = Math.max(0, Math.floor(ms / 1000));
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60);
+                const s = sec % 60;
+                return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+            },
+            statusOf(p) {
+                const now = new Date();
+                const stock = Number(p.stock || 0);
+                const st = this.parseDate(p.startTime);
+                const et = this.parseDate(p.endTime);
+                if (stock <= 0) return { key: "soldout", label: "已售罄" };
+                if (st && now < st) return { key: "upcoming", label: "即将开始" };
+                if (et && now > et) return { key: "ended", label: "已结束" };
+                return { key: "active", label: "进行中" };
+            },
+            countdownText(p) {
+                const status = this.statusOf(p);
+                const now = new Date();
+                const st = this.parseDate(p.startTime);
+                const et = this.parseDate(p.endTime);
+                if (status.key === "upcoming" && st) return "距开始: " + this.duration(st - now);
+                if (status.key === "active" && et) return "距结束: " + this.duration(et - now);
+                if (status.key === "soldout") return "库存耗尽，可刷新查看补货";
+                return "活动已结束";
+            },
+            notify(type, text) {
+                this.message = { type, text };
+            },
+            getToken() {
+                return SeckillUi.getToken();
+            },
+            getUserId() {
+                return SeckillUi.getUserId();
+            },
+            async loadProducts() {
+                this.loading = true;
+                try {
+                    const res = await fetch("/api/products/list");
+                    const result = await res.json();
+                    if (result.code !== 200 || !Array.isArray(result.data)) throw new Error(result.msg || "商品加载异常");
+                    this.products = result.data;
+                    this.notify("info", "商品已刷新");
+                } catch (e) {
+                    this.notify("error", "加载商品失败: " + (e.message || "未知错误"));
+                } finally {
+                    this.loading = false;
                 }
-                const finalMin = Math.min(minPrice, maxPrice);
-                const finalMax = Math.max(minPrice, maxPrice);
-                if (finalMin !== minPrice || finalMax !== maxPrice) {
-                    notify("info", UI_TEXT.rangeSwapped);
+            },
+            fallbackSearch(mode, a, b) {
+                const k = String(a || "").toLowerCase();
+                if (mode === "keyword") return this.products.filter((p) => String(p.productName || "").toLowerCase().includes(k) || String(p.description || "").toLowerCase().includes(k));
+                if (mode === "name") return this.products.filter((p) => String(p.productName || "").toLowerCase().includes(k));
+                const min = Number(a); const max = Number(b);
+                return this.products.filter((p) => Number(p.seckillPrice || 0) >= min && Number(p.seckillPrice || 0) <= max);
+            },
+            async searchProducts() {
+                if (!this.searchA) {
+                    this.notify("error", "请输入搜索条件");
+                    return;
                 }
-                url = SEARCH_BASE + "/price?minPrice=" + encodeURIComponent(finalMin) + "&maxPrice=" + encodeURIComponent(finalMax) + "&page=0&size=10";
+                this.searching = true;
+                try {
+                    let url;
+                    if (this.searchMode === "keyword") {
+                        url = "/api/search/keyword?keyword=" + encodeURIComponent(this.searchA) + "&page=0&size=20";
+                    } else if (this.searchMode === "name") {
+                        url = "/api/search/name?name=" + encodeURIComponent(this.searchA) + "&page=0&size=20";
+                    } else {
+                        if (!this.searchB) throw new Error("价格区间请填写完整");
+                        const min = Math.min(Number(this.searchA), Number(this.searchB));
+                        const max = Math.max(Number(this.searchA), Number(this.searchB));
+                        url = "/api/search/price?minPrice=" + min + "&maxPrice=" + max + "&page=0&size=20";
+                    }
+                    const res = await fetch(url);
+                    const result = await res.json();
+                    if (result.code === 200 && result.data && Array.isArray(result.data.content)) {
+                        this.products = result.data.content;
+                        this.activeFilter = "all";
+                        this.notify("info", "搜索完成，已展示 " + this.products.length + " 条结果");
+                        return;
+                    }
+                    throw new Error(result.msg || "搜索失败");
+                } catch (e) {
+                    this.products = this.fallbackSearch(this.searchMode, this.searchA, this.searchB);
+                    this.activeFilter = "all";
+                    this.notify("info", "搜索服务不可用，已使用本地筛选: " + (e.message || "未知错误"));
+                } finally {
+                    this.searching = false;
+                }
+            },
+            resetSearch() {
+                this.searchMode = "keyword";
+                this.searchA = "";
+                this.searchB = "";
+                this.activeFilter = "all";
+                this.loadProducts();
+            },
+            async pollOrder(orderId, token) {
+                for (let i = 0; i < 8; i++) {
+                    const res = await fetch("/api/orders/" + encodeURIComponent(orderId), { headers: { "X-Login-Token": token } });
+                    const result = await res.json();
+                    if (result.code !== 200 || !result.data) throw new Error(result.msg || "查询订单失败");
+                    if (result.data.status === "CREATED" || result.data.status === "FAILED") return result.data;
+                    this.notify("info", "订单排队中(" + (i + 1) + "/8)");
+                    await new Promise((r) => setTimeout(r, 1000));
+                }
+                return { status: "TIMEOUT", message: "请稍后在订单页查看" };
+            },
+            async seckill(p) {
+                if (this.seckillLoading) return;
+                if (this.statusOf(p).key !== "active") {
+                    this.notify("error", "该商品当前不可下单");
+                    return;
+                }
+                if (!window.confirm("确认秒杀 " + (p.productName || "该商品") + " ?")) return;
+                if (!SeckillUi.ensureAuth({ requireToken: true })) {
+                    return;
+                }
+                const userId = this.getUserId();
+                if (!userId) {
+                    this.notify("error", "请先登录后再下单");
+                    return;
+                }
+                this.seckillLoading = true;
+                try {
+                    const res = await fetch("/api/products/seckill/" + p.id + "?userId=" + userId, { method: "POST" });
+                    const result = await res.json();
+                    if (result.code !== 200 || !result.data) throw new Error(result.msg || "下单失败");
+                    this.notify("info", "请求已受理，订单号: " + result.data);
+                    const orderResult = await this.pollOrder(result.data, this.getToken());
+                    await this.loadProducts();
+                    if (orderResult.status === "CREATED") this.notify("success", "下单成功");
+                    else if (orderResult.status === "FAILED") this.notify("error", "下单失败: " + (orderResult.message || ""));
+                    else this.notify("info", orderResult.message || "处理中");
+                } catch (e) {
+                    this.notify("error", "秒杀失败: " + (e.message || "未知错误"));
+                } finally {
+                    this.seckillLoading = false;
+                }
             }
-            const response = await fetch(url);
-            const result = await response.json();
-            if (result.code === 200 && result.data && Array.isArray(result.data.content)) {
-                renderSearchDocuments(result.data.content || []);
-                notify("info", UI_TEXT.searchDone);
+        },
+        mounted() {
+            if (!SeckillUi.ensureAuth({ requireToken: false })) {
                 return;
             }
-            throw new Error(result.msg || "搜索失败，请稍后重试。");
-        } catch (error) {
-            if (allProducts.length) {
-                const fallback = fallbackSearchByList(mode, a, b);
-                renderSearchDocuments(fallback);
-                notify("info", UI_TEXT.searchFallback + "，原因：" + (error.message || "未知错误"));
-            } else {
-                notify("error", "搜索失败：" + (error.message || "未知错误"));
-            }
-        } finally {
-            searchButton.disabled = false;
-            searchButton.textContent = "搜索";
+            this.username = SeckillUi.getUsername();
+            this.loadProducts();
+            setInterval(() => this.$forceUpdate(), 1000);
         }
-    }
-
-    async function handleSeckill(productId) {
-        if (seckillInFlight) {
-            return;
-        }
-
-        const product = allProducts.find((item) => String(item.id) === String(productId));
-        if (!product) {
-            notify("error", UI_TEXT.productMissing);
-            return;
-        }
-
-        const status = getProductStatus(product);
-        if (status.key !== "active") {
-            notify("error", UI_TEXT.productNotActive);
-            renderProducts();
-            return;
-        }
-
-        const confirmed = window.confirm("确定参与“" + (product.productName || "当前商品") + "”的秒杀吗？");
-        if (!confirmed) {
-            return;
-        }
-
-        seckillInFlight = true;
-        notify("info", UI_TEXT.submitting);
-        renderProducts();
-
-        try {
-            const userId = getUserId();
-            const response = await fetch(API_BASE + "/seckill/" + productId + "?userId=" + userId, {
-                method: "POST"
-            });
-            const result = await response.json();
-
-            if (result.code === 200 && result.data) {
-                const orderId = result.data;
-                notify("info", UI_TEXT.accepted + "（订单号：" + orderId + "）");
-                const statusResult = await pollOrderStatus(orderId);
-                await fetchProducts();
-                if (statusResult.status === "CREATED") {
-                    notify("info", UI_TEXT.created + "（订单号：" + orderId + "）");
-                } else if (statusResult.status === "FAILED") {
-                    notify("error", UI_TEXT.failed + "：" + (statusResult.message || "请稍后重试"));
-                } else {
-                    notify("info", statusResult.message);
-                }
-                return;
-            }
-
-            notify("error", UI_TEXT.failed + "：" + (result.msg || "请稍后重试"));
-        } catch (error) {
-            notify("error", UI_TEXT.seckillRequestFailed);
-            console.error("seckill request failed", error);
-        } finally {
-            seckillInFlight = false;
-            renderProducts();
-        }
-    }
-
-    function startCountdownTicker() {
-        if (countdownTimer) {
-            window.clearInterval(countdownTimer);
-        }
-        countdownTimer = window.setInterval(() => {
-            if (currentView === "list" && allProducts.length) {
-                updateSummary(allProducts);
-                renderProducts();
-            }
-        }, 1000);
-    }
-
-    filterButtons.forEach((button) => {
-        button.addEventListener("click", () => setActiveFilter(button.dataset.filter));
-    });
-
-    refreshButton.addEventListener("click", fetchProducts);
-    searchMode.addEventListener("change", updateSearchFormByMode);
-    searchButton.addEventListener("click", searchProducts);
-    resetSearchButton.addEventListener("click", () => {
-        searchInputA.value = "";
-        searchInputB.value = "";
-        setActiveFilter("all");
-        clearPageMessage();
-        statusLine.textContent = "已返回全部商品。";
-    });
-
-    productContainer.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) {
-            return;
-        }
-        const button = target.closest("[data-product-id]");
-        if (!button) {
-            return;
-        }
-        handleSeckill(button.getAttribute("data-product-id"));
-    });
-
-    fetchProducts();
-    updateSearchFormByMode();
-    startCountdownTicker();
+    }).mount("#app");
 </script>
 </body>
 </html>

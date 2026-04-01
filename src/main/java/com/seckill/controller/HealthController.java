@@ -40,7 +40,6 @@ public class HealthController {
         if (latestAudit != null) {
             LocalDateTime auditTime = (LocalDateTime) latestAudit.get("createTime");
             boolean seeded = (boolean) latestAudit.get("seeded");
-            // SQL 初始化发生在应用启动过程，时间应接近当前启动时刻
             seededThisStartup = seeded && !auditTime.isBefore(appStartupTime.minusMinutes(10));
         }
 
