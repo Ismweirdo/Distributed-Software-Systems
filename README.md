@@ -254,6 +254,136 @@ mvn test -Dtest=ReadWriteSeparationTest
 mvn test -Dtest=SearchServiceTest
 ```
 
+## JMeter 压测
+
+### JMeter 压测文档（静态文件 + 后端服务）
+
+#### 1. 目标
+- 分别压测静态资源和后端接口。
+- 观察并记录响应时间（平均值、P95、P99、最大值）以及错误率。
+
+#### 2. 压测脚本
+- 静态资源脚本：`perf/jmeter/seckill-static.jmx`
+- 后端服务脚本：`perf/jmeter/seckill-backend.jmx`
+
+#### 3. 测试环境
+- 项目端口：`8083`（见 `src/main/resources/application.yml`）
+- Docker 场景端口：`8084 -> 8083`（见 `docker-compose.yml`）
+- JMeter：建议 `5.6.3+`
+
+> 说明：本次仓库内已准备好脚本和执行命令模板。若本机未安装 JMeter 或服务未启动，请先完成环境准备后再执行并回填第 7 节结果。
+
+#### 4. 场景设计
+
+##### 4.1 静态文件压测
+请求对象：
+- `GET /index.html`
+- `GET /main.html`
+- `GET /products.html`
+- `GET /orders.html`
+- `GET /js/app-shell.js`
+
+默认参数：
+- 线程数：`50`
+- Ramp-Up：`30s`
+- 持续时间：`180s`
+
+断言：
+- `index.html` 响应包含 `<!DOCTYPE html>`。
+
+##### 4.2 后端服务压测
+请求对象：
+- 读接口线程组
+  - `GET /api/health/init-status`
+  - `GET /api/products/list`
+  - `GET /api/products/{id}`
+- 写接口线程组
+  - `POST /api/products/seckill/{id}?userId={userId}`
+
+默认参数：
+- 读线程数：`80`
+- 写线程数：`30`
+- Ramp-Up：`30s`
+- 持续时间：`300s`
+- `productId=1`
+- `userId=1001`
+
+断言：
+- 读接口 JSONPath 断言：`$.code == 200`
+- 秒杀接口响应包含 `"code"` 字段
+
+#### 5. 执行方式（PowerShell）
+
+##### 5.1 静态文件压测
+```powershell
+New-Item -ItemType Directory -Force -Path .\perf\results\static | Out-Null
+jmeter -n -t .\perf\jmeter\seckill-static.jmx -l .\perf\results\static\result.jtl -e -o .\perf\results\static\html -Jhost=127.0.0.1 -Jport=8083 -Jthreads=50 -JrampUp=30 -Jduration=180
+```
+
+##### 5.2 后端接口压测
+```powershell
+New-Item -ItemType Directory -Force -Path .\perf\results\backend | Out-Null
+jmeter -n -t .\perf\jmeter\seckill-backend.jmx -l .\perf\results\backend\result.jtl -e -o .\perf\results\backend\html -Jhost=127.0.0.1 -Jport=8083 -JreadThreads=80 -JwriteThreads=30 -JrampUp=30 -Jduration=300 -JproductId=1 -JuserId=1001
+```
+
+##### 5.3 Docker 端口场景
+如应用通过 `docker-compose` 运行，请改用 `-Jport=8084`。
+
+#### 6. 指标解读口径
+优先关注：
+- 平均响应时间（Average）
+- P95 / P99 响应时间
+- 吞吐量（Throughput）
+- 错误率（Error %）
+
+建议阈值（可按业务调整）：
+- 静态资源：P95 < `200ms`，错误率 < `0.1%`
+- 后端读接口：P95 < `300ms`，错误率 < `1%`
+- 后端写接口：P95 < `500ms`，错误率 < `2%`
+
+#### 7. 响应时间观察记录（执行后回填）
+
+##### 7.1 静态文件
+| 指标 | 数值 |
+|---|---|
+| Samples | 527632 |
+| Error % | 39.99% |
+| Average (ms) | 15.57 |
+| P95 (ms) | 35 |
+| P99 (ms) | 55 |
+| Max (ms) | 248 |
+
+##### 7.2 后端服务
+| 指标 | 数值 |
+|---|---|
+| Samples | 2738494 |
+| Error % | 0.00% |
+| Average (ms) | 28.60 |
+| P95 (ms) | 110 |
+| P99 (ms) | 181 |
+| Max (ms) | 1419 |
+
+##### 7.3 后端处理请求数均衡验证（读库）
+统计口径：对 `seckill-mysql-slave1` 与 `seckill-mysql-slave2` 的 `Com_select` 计数做压测前后差分。
+
+- 压测前：slave1=`310454`，slave2=`312089`
+- 压测后：slave1=`400874`，slave2=`402879`
+- 增量：slave1=`90420`，slave2=`90790`
+- 偏差：`|90790-90420| / ((90790+90420)/2) = 0.41%`
+
+结论：两台读后端处理请求数差异约 `0.41%`，可认为大致相等。
+
+##### 7.4 结论
+- 静态文件场景：响应时间表现良好（P95=35ms，低于 200ms），但错误率 39.99%，明显高于阈值 0.1%，整体不达标。
+- 后端服务场景：P95=110ms、错误率 0.00%，均在阈值范围内，整体达标。
+- 后端读请求分布：slave1/slave2 增量差异约 0.41%，负载分配基本均衡。
+- 建议优先排查静态场景的失败样本（响应断言、路径命中、返回码分布），确认高错误率是否来自断言策略而非真实服务故障。
+
+#### 8. 常见问题
+- `Connection refused`：服务未启动或端口不对。
+- `JSONPathAssertion failed`：接口返回非预期 JSON，先检查业务初始化状态。
+- 错误率高且响应时间抖动：先排查 MySQL/Redis 连接与容器资源限制。
+
 ## 前端页面
 静态页面位于 `src/main/resources/static`：
 - `/index.html`
